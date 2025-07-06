@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ronald_duck/widgets/option_card.dart';
 
 class QuestScreen extends StatefulWidget {
   const QuestScreen({super.key});
@@ -14,252 +15,197 @@ class _QuestScreenState extends State<QuestScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background color
           Container(color: const Color(0xFFF8ECB8)),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // Top Bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.more_horiz),
-                              onPressed: () {
-                                // Handle more options
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.refresh),
-                              onPressed: () {
-                                // Handle retry
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.monetization_on,
-                                color: Colors.amber,
-                              ),
-                              const SizedBox(width: 4),
-                              Text('100', style: GoogleFonts.nunito()),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Ronald Quest Image and Bubbles
-                  Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      Image.asset(
-                        'assets/images/ronald-quest.png',
-                        width: 200,
-                        height: 200,
-                      ),
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.chat_bubble,
-                          ), // Placeholder for first bubble
-                        ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.chat_bubble,
-                          ), // Placeholder for second bubble
-                        ),
-                      ),
-                      Positioned(
-                        top: 50,
-                        right: 20,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Image.asset(
-                            'assets/images/food_icon.png', // Assuming you have a food icon
-                            width: 30,
-                            height: 30,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Question Card
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        'Ronald punya satu lembar uang Rp5.000. Dia mau beli es krim cokelat seharga Rp3.000. Berapa uang kembalian yang diterima Ronald?',
-                        style: GoogleFonts.nunito(fontSize: 16),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Multiple Choice Options
-                  Column(
-                    children: [
-                      _buildOptionCard('A', 'Rp1.000'),
-                      const SizedBox(height: 10),
-                      _buildOptionCard('B', 'Rp2.000'),
-                      const SizedBox(height: 10),
-                      _buildOptionCard('C', 'Rp3.000'),
-                      const SizedBox(height: 10),
-                      _buildOptionCard('D', 'Rp4.000'),
-                    ],
-                  ),
-                  const Spacer(),
-                  // Bottom Action Bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Hint Card
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Stack(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            Card(
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               child: IconButton(
-                                icon: const Icon(Icons.lightbulb_outline),
-                                onPressed: () {
-                                  _showHintModal(context);
-                                },
+                                icon: const Icon(Icons.more_horiz),
+                                onPressed: () {},
                               ),
                             ),
-                            Positioned(
-                              top: -5,
-                              right: -5,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.info_outline,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
+                            const SizedBox(width: 8),
+                            Card(
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.refresh),
+                                onPressed: () {},
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      // Submit Card
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context); // Go back to home screen
-                        },
-                        child: Card(
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.monetization_on,
+                                  color: Colors.amber,
+                                ),
+                                const SizedBox(width: 4),
+                                Text('100', style: GoogleFonts.nunito()),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Stack(
+                      alignment: Alignment.topCenter,
+                      clipBehavior: Clip.none,
+                      children: [
+                        Column(
+                          children: [
+                            Image.asset(
+                              'assets/images/ronald-quest.png',
+                              width: 200,
+                              height: 200,
+                            ),
+                            const SizedBox(height: 80),
+                          ],
+                        ),
+                        Positioned(
+                          top: 5,
+                          right: 20,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: Image.asset(
+                              'assets/images/ice-cream.png',
+                              width: 30,
+                              height: 30,
+                            ),
+                          ),
+                        ),
+
+                        Positioned(
+                          bottom: 20,
+
+                          child: Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 350),
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                'Ronald punya satu lembar uang Rp5.000. Dia mau beli es krim cokelat seharga Rp3.000. Berapa uang kembalian yang diterima Ronald?',
+                                style: GoogleFonts.nunito(fontSize: 16),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: const [
+                        OptionCard(prefix: 'A', text: 'Rp1.000'),
+                        SizedBox(height: 10),
+                        OptionCard(prefix: 'B', text: 'Rp2.000'),
+                        SizedBox(height: 10),
+                        OptionCard(prefix: 'C', text: 'Rp3.000'),
+                        SizedBox(height: 10),
+                        OptionCard(prefix: 'D', text: 'Rp4.000'),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Card(
                           elevation: 4,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          color: const Color(0xFF78B96A),
-                          child: const Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 30,
+                          child: Stack(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IconButton(
+                                  icon: const Icon(Icons.lightbulb_outline),
+                                  onPressed: () {
+                                    _showHintModal(context);
+                                  },
+                                ),
+                              ),
+                              Positioned(
+                                top: -5,
+                                right: -5,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.info_outline,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                          },
+                          child: Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            color: const Color(0xFF78B96A),
+                            child: const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 30,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildOptionCard(String prefix, String text) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 12,
-              backgroundColor: Colors.grey[300],
-              child: Text(
-                prefix,
-                style: GoogleFonts.nunito(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(text, style: GoogleFonts.nunito(fontSize: 16)),
-          ],
-        ),
       ),
     );
   }
@@ -295,7 +241,7 @@ class _QuestScreenState extends State<QuestScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF8C00), // Orange color
+                        color: const Color(0xFFFF8C00),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -313,7 +259,7 @@ class _QuestScreenState extends State<QuestScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF78B96A), // Green color
+                        color: const Color(0xFF78B96A),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -338,7 +284,7 @@ class _QuestScreenState extends State<QuestScreen> {
                         Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF78B96A), // Green color
+                        backgroundColor: const Color(0xFF78B96A),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -363,7 +309,7 @@ class _QuestScreenState extends State<QuestScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFF8ECB8), // Light yellow color
+                    color: Color(0xFFF8ECB8),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

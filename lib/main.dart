@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ronald_duck/screens/home_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,6 +10,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Flutter Demo', home: HomeScreen());
+    return MaterialApp(title: 'Ronald Duck', home: HomeScreen());
   }
 }
