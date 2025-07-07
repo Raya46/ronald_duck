@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ronald_duck/screens/quest_screen.dart';
+import 'package:ronald_duck/screens/shop_screen.dart';
+import 'package:ronald_duck/screens/voice_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -141,8 +143,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildBottomCard('assets/images/shop.png', 'Shop'),
-                      _buildBottomCard('assets/images/voice.png', 'AI Voice'),
+                      _buildBottomCard('assets/images/shop.png', 'Shop', () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ShopScreen(),
+                          ),
+                        );
+                      }),
+                      _buildBottomCard('assets/images/voice.png', 'AI Voice', () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const VoiceScreen(),
+                          ),
+                        );
+                      }),
                       _buildBottomCard('assets/images/quest.png', 'Quest', () {
                         Navigator.push(
                           context,

@@ -10,6 +10,165 @@ class QuestScreen extends StatefulWidget {
 }
 
 class _QuestScreenState extends State<QuestScreen> {
+  String? _selectedOption;
+  final String _correctAnswer = 'B';
+
+  void _onOptionSelected(String option) {
+    setState(() {
+      _selectedOption = option;
+    });
+  }
+
+  void _checkAnswer() {
+    if (_selectedOption == _correctAnswer) {
+      _showResultModal(context, true);
+    } else {
+      _showResultModal(context, false);
+    }
+  }
+
+  void _showResultModal(BuildContext context, bool isCorrect) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8ECB8), // Background color of the modal
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF8ECB8), width: 5),
+                ),
+                padding: const EdgeInsets.only(top: 80, left: 20, right: 20, bottom: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isCorrect ? 'VICTORY!' : 'OH NO!',
+                      style: GoogleFonts.nunito(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: isCorrect ? const Color(0xFFFF8C00) : Colors.red,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      isCorrect ? 'Kamu dapat' : 'Jawabanmu salah',
+                      style: GoogleFonts.nunito(fontSize: 18),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (isCorrect) ...[
+                      const SizedBox(height: 10),
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star, color: Colors.amber),
+                              const SizedBox(width: 8),
+                              Text(
+                                '+20 Credit',
+                                style: GoogleFonts.nunito(fontSize: 18),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        if (isCorrect)
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              Navigator.pop(context); // Go back to home screen
+                            },
+                            child: Card(
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              color: const Color(0xFFEA8538),
+                              child: const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: Icon(
+                                  Icons.home,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                            ),
+                          ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            if (!isCorrect) {
+                              // Optionally reset state for retry
+                            }
+                          },
+                          child: Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            color: isCorrect ? const Color(0xFFEA8538) : const Color(0xFF78B96A),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    isCorrect ? 'Lanjut \u2192' : 'Coba Lagi',
+                                    style: GoogleFonts.nunito(color: Colors.white, fontSize: 18),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: -60,
+                child: Image.asset(
+                  isCorrect ? 'assets/images/ronald-right.png' : 'assets/images/ronald-wrong.png',
+                  width: 150,
+                  height: 150,
+                ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Icon(Icons.close, color: Colors.grey, size: 24),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,14 +288,34 @@ class _QuestScreenState extends State<QuestScreen> {
                       ],
                     ),
                     Column(
-                      children: const [
-                        OptionCard(prefix: 'A', text: 'Rp1.000'),
-                        SizedBox(height: 10),
-                        OptionCard(prefix: 'B', text: 'Rp2.000'),
-                        SizedBox(height: 10),
-                        OptionCard(prefix: 'C', text: 'Rp3.000'),
-                        SizedBox(height: 10),
-                        OptionCard(prefix: 'D', text: 'Rp4.000'),
+                      children: [
+                        OptionCard(
+                          prefix: 'A',
+                          text: 'Rp1.000',
+                          onTap: () => _onOptionSelected('A'),
+                          isCorrect: false,
+                        ),
+                        const SizedBox(height: 10),
+                        OptionCard(
+                          prefix: 'B',
+                          text: 'Rp2.000',
+                          onTap: () => _onOptionSelected('B'),
+                          isCorrect: true,
+                        ),
+                        const SizedBox(height: 10),
+                        OptionCard(
+                          prefix: 'C',
+                          text: 'Rp3.000',
+                          onTap: () => _onOptionSelected('C'),
+                          isCorrect: false,
+                        ),
+                        const SizedBox(height: 10),
+                        OptionCard(
+                          prefix: 'D',
+                          text: 'Rp4.000',
+                          onTap: () => _onOptionSelected('D'),
+                          isCorrect: false,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -152,11 +331,15 @@ class _QuestScreenState extends State<QuestScreen> {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: IconButton(
-                                  icon: const Icon(Icons.lightbulb_outline),
-                                  onPressed: () {
+                                child: GestureDetector(
+                                  onTap: () {
                                     _showHintModal(context);
                                   },
+                                  child: Image.asset(
+                                    'assets/images/bulb.png',
+                                    width: 30,
+                                    height: 30,
+                                  ),
                                 ),
                               ),
                               Positioned(
@@ -179,9 +362,7 @@ class _QuestScreenState extends State<QuestScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
+                          onTap: _checkAnswer,
                           child: Card(
                             elevation: 4,
                             shape: RoundedRectangleBorder(
