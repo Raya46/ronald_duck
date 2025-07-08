@@ -3,13 +3,13 @@ import 'package:ronald_duck/screens/login_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized(); 
   try {
-    await dotenv.load(fileName: ".env"); // Load environment variables
+    await dotenv.load(fileName: ".env"); 
   } catch (e) {
-    throw Exception('Error loading .env file: $e'); // Print error if any
+    throw Exception('Error loading .env file: $e'); 
   }
-  runApp(const MyApp()); // Runs the app
+  runApp(const MyApp()); 
 }
 
 class MyApp extends StatelessWidget {

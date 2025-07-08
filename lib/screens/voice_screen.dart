@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class VoiceScreen extends StatefulWidget {
   const VoiceScreen({super.key});
@@ -19,17 +20,13 @@ class _VoiceScreenState extends State<VoiceScreen>
   bool _isRecording = false;
   late AnimationController _animationController;
   final SpeechToText _speechToText = SpeechToText();
-  late final GenerativeModel _model;
-  final AudioPlayer _audioPlayer = AudioPlayer();
   String _lastWords = '';
-  String _geminiResponse = '';
+  String _apiResponse = '';
   final FlutterTts _flutterTts = FlutterTts();
 
   @override
   void initState() {
     super.initState();
-      final String apiKey = dotenv.env['GEMINI_API_KEY'] ?? 'default_url';
-    _model = GenerativeModel(model: 'gemini-2.0', apiKey: apiKey);
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -47,21 +44,15 @@ class _VoiceScreenState extends State<VoiceScreen>
   void _initSpeech() async {
     await _speechToText.initialize(
       onStatus: (status) {
-        print('Speech status: $status');
         if (status == 'listening') {
-          setState(() {
-            _isRecording = true;
-          });
-        } else if (status == 'notListening') {
-          setState(() {
-            _isRecording = false;
-          });
+          if (!_isRecording) setState(() => _isRecording = true);
+        } else if (status == 'notListening' || status == 'done') {
+          if (_isRecording) setState(() => _isRecording = false);
         }
       },
       onError: (errorNotification) {
-        setState(() {
-          _isRecording = false;
-        });
+        setState(() => _isRecording = false);
+        print('Speech recognition error: $errorNotification');
       },
     );
   }
@@ -70,61 +61,113 @@ class _VoiceScreenState extends State<VoiceScreen>
   void dispose() {
     _animationController.dispose();
     _speechToText.stop();
-    _audioPlayer.dispose();
+    _flutterTts.stop();
     super.dispose();
   }
 
   void _toggleRecording() async {
     if (_isRecording) {
       _speechToText.stop();
+      setState(() => _isRecording = false);
     } else {
-      _lastWords = '';
-      _geminiResponse = '';
-      bool available = await _speechToText.listen(
-        onResult: (result) {
-          setState(() {
-            _lastWords = result.recognizedWords;
-          });
-          if (result.finalResult) {
-            _sendToGemini(_lastWords);
-          }
-        },
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 3),
-        localeId: 'en_US',
-      );
-      if (!available) {
-        print('The user has denied the use of speech recognition.');
-        setState(() {
-          _isRecording = false;
-        });
+      var status = await Permission.microphone.request();
+
+      if (status.isGranted) {
+        _lastWords = '';
+        _apiResponse = ''; // Reset respons
+        _speechToText.listen(
+          onResult: (result) {
+            setState(() => _lastWords = result.recognizedWords);
+            if (result.finalResult) {
+              _sendToOpenRouter(_lastWords); // Panggil fungsi API
+            }
+          },
+          listenFor: const Duration(seconds: 30),
+          pauseFor: const Duration(seconds: 3),
+          localeId: 'id_ID',
+        );
+        setState(() => _isRecording = true);
+      } else {
+        print('Izin mikrofon ditolak oleh pengguna.');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Izin mikrofon diperlukan untuk menggunakan fitur ini.',
+              ),
+            ),
+          );
+        }
       }
     }
   }
 
-  void _sendToGemini(String text) async {
+  void _sendToOpenRouter(String text) async {
+    if (text.isEmpty) return;
+
     setState(() {
-      _geminiResponse = 'AI sedang berpikir...';
+      _apiResponse = 'AI sedang berpikir...';
     });
+
+    final apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
+    if (apiKey.isEmpty) {
+      print('API Key OpenRouter tidak ditemukan di .env');
+      setState(() {
+        _apiResponse = 'API Key tidak ditemukan.';
+      });
+      return;
+    }
+
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $apiKey',
+    };
+
+    final body = jsonEncode({
+      "model": "openai/gpt-4o-mini",
+      "messages": [
+        {
+          "role": "system",
+          "content":
+              "Kamu adalah Ronald bebek, pakar finansial yang ramah, ceria, dan membantu untuk anak. Selalu jawab dalam bahasa Indonesia. Tugas kamu adalah mengajari anak anak untuk paham finansial, dan ingat kamu adalah seekor bebek jadi jawab dengan Wek! untuk awal dan akhir dari respon",
+        },
+        {"role": "user", "content": text},
+      ],
+    });
+
     try {
-      final content = [Content.text(text)];
+      final response = await http.post(
+        Uri.parse("https://openrouter.ai/api/v1/chat/completions"),
+        headers: headers,
+        body: body,
+      );
 
-      final response = await _model.generateContent(content);
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(utf8.decode(response.bodyBytes));
+        final responseText =
+            decodedResponse['choices'][0]['message']['content'] ??
+            'Tidak ada respons dari AI.';
 
-      setState(() {
-        _geminiResponse = response.text ?? 'Tidak ada respons dari AI.';
-      });
-      _speak(_geminiResponse);
+        setState(() {
+          _apiResponse = responseText;
+        });
+        _speak(_apiResponse);
+      } else {
+        print('Error dari OpenRouter: ${response.statusCode}');
+        print('Body Error: ${response.body}');
+        setState(() {
+          _apiResponse = 'Gagal menghubungi AI. Kode: ${response.statusCode}';
+        });
+      }
     } catch (e) {
+      print('Error: $e');
       setState(() {
-        _geminiResponse = 'Error: $e';
+        _apiResponse = 'Terjadi kesalahan jaringan. Coba lagi.';
       });
-      print('Error mengirim ke Gemini: $e');
     }
   }
 
   void _speak(String text) async {
-    print('AI Speaking: $text');
     if (text.isNotEmpty) {
       await _flutterTts.speak(text);
     }
@@ -158,7 +201,6 @@ class _VoiceScreenState extends State<VoiceScreen>
               ),
             ),
           ),
-
           ...List.generate(
             20,
             (index) => Positioned(
@@ -261,11 +303,10 @@ class _VoiceScreenState extends State<VoiceScreen>
                     children: [
                       Image.asset(
                         'assets/images/ronald-wink.png',
-                        width: 200,
-                        height: 200,
+                        width: 400,
+                        height: 400,
                       ),
-                      const SizedBox(height: 50),
-
+                      const SizedBox(height: 20),
                       if (_isRecording)
                         SizedBox(
                           height: 50,
@@ -275,8 +316,12 @@ class _VoiceScreenState extends State<VoiceScreen>
                             ),
                             child: Container(),
                           ),
-                        ),
-                      const SizedBox(height: 50),
+                        )
+                      else
+                        const SizedBox(
+                          height: 50,
+                        ), // Placeholder agar layout stabil
+                      const SizedBox(height: 20),
                       GestureDetector(
                         onTap: _toggleRecording,
                         child: Card(

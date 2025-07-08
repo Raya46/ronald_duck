@@ -32,26 +32,10 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 50),
                   Image.asset(
                     'assets/images/ronald-splash.png',
-                    width: 150,
-                    height: 150,
+                    width: 250,
+                    height: 250,
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Ronald',
-                    style: GoogleFonts.nunito(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF8B4513),
-                    ),
-                  ),
-                  Text(
-                    'The Smart Duck',
-                    style: GoogleFonts.nunito(
-                      fontSize: 24,
-                      color: const Color(0xFF78B96A),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
