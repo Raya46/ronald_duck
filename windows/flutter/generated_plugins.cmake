@@ -5,11 +5,9 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   audioplayers_windows
-  file_selector_windows
-  firebase_auth
-  firebase_core
+  flutter_tts
   isar_flutter_libs
-  record_windows
+  permission_handler_windows
   rive_common
   url_launcher_windows
 )
