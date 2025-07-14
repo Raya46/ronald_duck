@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ronald_duck/screens/quest_screen.dart';
+import 'package:ronald_duck/screens/setting_screen.dart';
 import 'package:ronald_duck/screens/shop_screen.dart';
 import 'package:ronald_duck/screens/voice_screen.dart';
 
@@ -120,7 +121,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.settings),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SettingScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -151,14 +159,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       }),
-                      _buildBottomCard('assets/images/voice.png', 'AI Voice', () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const VoiceScreen(),
-                          ),
-                        );
-                      }),
+                      _buildBottomCard(
+                        'assets/images/voice.png',
+                        'AI Voice',
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VoiceScreen(),
+                            ),
+                          );
+                        },
+                      ),
                       _buildBottomCard('assets/images/quest.png', 'Quest', () {
                         Navigator.push(
                           context,
