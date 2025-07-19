@@ -13,7 +13,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF5E1),
+      backgroundColor: const Color(0xFFF8ECB8),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
