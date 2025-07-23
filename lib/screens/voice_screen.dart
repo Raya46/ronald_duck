@@ -26,7 +26,6 @@ class _VoiceScreenState extends State<VoiceScreen>
   late AnimationController _animationController;
   final SpeechToText _speechToText = SpeechToText();
   String _lastWords = '';
-  String _apiResponse = '';
   String _subtitleText = ''; // State untuk teks subtitel
   final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _subtitleTimer; // Timer untuk subtitel
@@ -78,7 +77,6 @@ class _VoiceScreenState extends State<VoiceScreen>
       if (status.isGranted) {
         setState(() {
           _lastWords = '';
-          _apiResponse = '';
           _subtitleText = ''; // Reset subtitel
         });
         _speechToText.listen(
@@ -157,7 +155,6 @@ class _VoiceScreenState extends State<VoiceScreen>
                 'Tidak ada respons dari AI.';
 
         setState(() {
-          _apiResponse = responseText;
           _subtitleText = '';
         });
         _speakWithElevenLabsAPI(responseText);
@@ -186,7 +183,6 @@ class _VoiceScreenState extends State<VoiceScreen>
       return;
     }
     
-    // Tetap dalam state berpikir saat audio di-load
     setState(() {
       _subtitleText = 'Ronald sedang berpikir...';
     });
@@ -507,7 +503,6 @@ class SoundWavePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true;
   }
-  @override
   bool shouldReclip(covariant CustomPainter oldDelegate) {
     return true;
   }
