@@ -41,6 +41,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 child: Column(
                   children: [
                     SettingList(
+                      icon: Icons.timer_outlined,
                       title: "Atur Waktu Bermain",
                       onPress: () {
                         Navigator.push(
@@ -52,6 +53,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       },
                     ),
                     SettingList(
+                      icon: Icons.music_note_outlined,
                       title: "Tema & Musik",
                       onPress: () {
                         Navigator.push(
@@ -63,6 +65,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       },
                     ),
                     SettingList(
+                      icon: Icons.lock_outline,
                       title: "Kontrol Orang Tua",
                       onPress: () {
                         Navigator.push(
@@ -74,6 +77,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       },
                     ),
                     SettingList(
+                      icon: Icons.info_outline,
                       title: "Tentang Aplikasi",
                       onPress: () {
                         Navigator.push(
@@ -85,6 +89,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       },
                     ),
                     SettingList(
+                      icon: Icons.headset_mic_outlined,
                       title: "Hubungi Kami",
                       onPress: () {
                         Navigator.push(
@@ -96,6 +101,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       },
                     ),
                     SettingList(
+                      icon: Icons.logout_outlined,
                       title: "Logout",
                       onPress: () {
                         Navigator.pushReplacement(

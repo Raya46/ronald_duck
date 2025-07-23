@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ronald_duck/screens/daily_streak/daily_streak_screen.dart';
 import 'package:ronald_duck/screens/quest_screen.dart';
 import 'package:ronald_duck/screens/setting_screen.dart';
 import 'package:ronald_duck/screens/shop_screen.dart';
@@ -50,17 +51,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.asset(
-                            'assets/images/avatar.png',
-                            width: 40,
-                            height: 40,
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DailyStreakScreen(),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Image.asset(
+                              'assets/images/avatar.png',
+                              width: 40,
+                              height: 40,
+                            ),
                           ),
                         ),
                       ),
