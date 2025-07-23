@@ -1,12 +1,15 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'dart:async'; // Import untuk Timer
 
 class VoiceScreen extends StatefulWidget {
   const VoiceScreen({super.key});
@@ -18,11 +21,15 @@ class VoiceScreen extends StatefulWidget {
 class _VoiceScreenState extends State<VoiceScreen>
     with SingleTickerProviderStateMixin {
   bool _isRecording = false;
+  bool _isThinking = false;
+  bool _isSpeaking = false;
   late AnimationController _animationController;
   final SpeechToText _speechToText = SpeechToText();
   String _lastWords = '';
   String _apiResponse = '';
-  final FlutterTts _flutterTts = FlutterTts();
+  String _subtitleText = ''; // State untuk teks subtitel
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  Timer? _subtitleTimer; // Timer untuk subtitel
 
   @override
   void initState() {
@@ -32,13 +39,6 @@ class _VoiceScreenState extends State<VoiceScreen>
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
     _initSpeech();
-    _initTts();
-  }
-
-  void _initTts() async {
-    await _flutterTts.setLanguage("id-ID");
-    await _flutterTts.setPitch(1.0);
-    await _flutterTts.setSpeechRate(0.5);
   }
 
   void _initSpeech() async {
@@ -61,29 +61,35 @@ class _VoiceScreenState extends State<VoiceScreen>
   void dispose() {
     _animationController.dispose();
     _speechToText.stop();
-    _flutterTts.stop();
+    _subtitleTimer?.cancel(); // Batalkan timer saat dispose
+    _audioPlayer.dispose();
     super.dispose();
   }
 
   void _toggleRecording() async {
-    if (_isRecording) {
+    if (_isRecording || _isThinking || _isSpeaking) return;
+
+    if (await _speechToText.isListening) {
       _speechToText.stop();
       setState(() => _isRecording = false);
     } else {
       var status = await Permission.microphone.request();
 
       if (status.isGranted) {
-        _lastWords = '';
-        _apiResponse = ''; // Reset respons
+        setState(() {
+          _lastWords = '';
+          _apiResponse = '';
+          _subtitleText = ''; // Reset subtitel
+        });
         _speechToText.listen(
           onResult: (result) {
             setState(() => _lastWords = result.recognizedWords);
             if (result.finalResult) {
-              _sendToOpenRouter(_lastWords); // Panggil fungsi API
+              _sendToOpenRouter(_lastWords);
             }
           },
           listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 3),
+          pauseFor: const Duration(seconds: 5),
           localeId: 'id_ID',
         );
         setState(() => _isRecording = true);
@@ -106,14 +112,16 @@ class _VoiceScreenState extends State<VoiceScreen>
     if (text.isEmpty) return;
 
     setState(() {
-      _apiResponse = 'AI sedang berpikir...';
+      _isThinking = true;
+      _subtitleText = 'Ronald sedang berpikir...';
     });
 
     final apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
     if (apiKey.isEmpty) {
       print('API Key OpenRouter tidak ditemukan di .env');
       setState(() {
-        _apiResponse = 'API Key tidak ditemukan.';
+        _isThinking = false;
+        _subtitleText = 'API Key tidak ditemukan.';
       });
       return;
     }
@@ -146,35 +154,166 @@ class _VoiceScreenState extends State<VoiceScreen>
         final decodedResponse = jsonDecode(utf8.decode(response.bodyBytes));
         final responseText =
             decodedResponse['choices'][0]['message']['content'] ??
-            'Tidak ada respons dari AI.';
+                'Tidak ada respons dari AI.';
 
         setState(() {
           _apiResponse = responseText;
+          _subtitleText = '';
         });
-        _speak(_apiResponse);
+        _speakWithElevenLabsAPI(responseText);
       } else {
+        final errorText = 'Gagal menghubungi AI. Kode: ${response.statusCode}';
         print('Error dari OpenRouter: ${response.statusCode}');
         print('Body Error: ${response.body}');
         setState(() {
-          _apiResponse = 'Gagal menghubungi AI. Kode: ${response.statusCode}';
+          _isThinking = false;
+          _subtitleText = errorText;
         });
       }
     } catch (e) {
+      final errorText = 'Terjadi kesalahan jaringan. Coba lagi.';
       print('Error: $e');
       setState(() {
-        _apiResponse = 'Terjadi kesalahan jaringan. Coba lagi.';
+        _isThinking = false;
+        _subtitleText = errorText;
       });
     }
   }
 
-  void _speak(String text) async {
-    if (text.isNotEmpty) {
-      await _flutterTts.speak(text);
+  void _speakWithElevenLabsAPI(String text) async {
+    if (text.isEmpty) {
+      setState(() => _isThinking = false);
+      return;
     }
+    
+    // Tetap dalam state berpikir saat audio di-load
+    setState(() {
+      _subtitleText = 'Ronald sedang berpikir...';
+    });
+
+    final apiKey = dotenv.env['ELEVENLABS_API_KEY'];
+    const voiceId = "iWydkXKoiVtvdn4vLKp9";
+    final url = "https://api.elevenlabs.io/v1/text-to-speech/$voiceId";
+
+    if (apiKey == null || apiKey.isEmpty) {
+      print("ElevenLabs API key not found");
+      setState(() {
+        _isThinking = false;
+        _subtitleText = "ElevenLabs API key not found";
+      });
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+        },
+        body: jsonEncode({
+          "text": text,
+          "model_id": "eleven_multilingual_v2",
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final directory = await getTemporaryDirectory();
+        final filePath = '${directory.path}/temp_audio.mp3';
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+
+        await _audioPlayer.stop();
+        
+        setState(() {
+          _isThinking = false;
+          _isSpeaking = true; // Mulai berbicara
+        });
+        
+        await _audioPlayer.play(DeviceFileSource(filePath));
+        _startSubtitleTimer(text);
+
+      } else {
+        print("Error from ElevenLabs API: ${response.statusCode}");
+        print("Response Body: ${response.body}");
+        setState(() {
+          _isThinking = false;
+          _subtitleText = "Gagal memuat audio.";
+        });
+      }
+    } catch (e) {
+      print("Error calling ElevenLabs API: $e");
+      setState(() {
+        _isThinking = false;
+        _subtitleText = "Gagal memuat audio.";
+      });
+    }
+  }
+
+  void _startSubtitleTimer(String fullText) async {
+    _subtitleTimer?.cancel();
+    
+    await Future.delayed(const Duration(milliseconds: 200));
+    final audioDuration = await _audioPlayer.getDuration();
+    
+    final words = fullText.split(' ');
+    if (words.isEmpty || audioDuration == null || audioDuration.inMilliseconds == 0) {
+      setState(() => _subtitleText = fullText);
+      return;
+    }
+
+    const chunkSize = 3;
+    final double delayPerChunk = (audioDuration.inMilliseconds / words.length) * chunkSize;
+    int wordIndex = 0;
+
+    _subtitleTimer = Timer.periodic(Duration(milliseconds: delayPerChunk.round()), (timer) {
+      if (wordIndex < words.length) {
+        if (mounted) {
+          final end = (wordIndex + chunkSize > words.length) ? words.length : wordIndex + chunkSize;
+          setState(() {
+            _subtitleText = words.sublist(wordIndex, end).join(' ');
+          });
+        }
+        wordIndex += chunkSize;
+      } else {
+        timer.cancel();
+      }
+    });
+
+    _audioPlayer.onPlayerComplete.first.then((_) {
+      _subtitleTimer?.cancel();
+      if(mounted) {
+        setState(() {
+          _isSpeaking = false;
+          _subtitleText = ''; // Kosongkan subtitel setelah selesai
+        });
+      }
+    });
+  }
+
+  String _getCurrentRonaldImage() {
+    if (_isThinking) {
+      return 'assets/images/ronald-wrong.png';
+    }
+    if (_isSpeaking) {
+      return 'assets/images/ronald-adult.png';
+    }
+    return 'assets/images/ronald-wink.png';
   }
 
   @override
   Widget build(BuildContext context) {
+    String displayText;
+    if (_isRecording) {
+      displayText = 'Mendengarkan...';
+    } else if (_isThinking) {
+      displayText = 'Ronald sedang berpikir...';
+    } else if (_subtitleText.isNotEmpty) {
+      displayText = _subtitleText;
+    } else {
+      displayText = 'Tekan tombol untuk bicara';
+    }
+
     return Scaffold(
       body: Stack(
         children: [
@@ -243,57 +382,7 @@ class _VoiceScreenState extends State<VoiceScreen>
                           },
                         ),
                       ),
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.local_fire_department,
-                                color: Colors.orange,
-                              ),
-                              const SizedBox(width: 4),
-                              Text('100 XP', style: GoogleFonts.nunito()),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.star, color: Colors.amber),
-                              const SizedBox(width: 4),
-                              Text('100', style: GoogleFonts.nunito()),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.settings),
-                          onPressed: () {},
-                        ),
-                      ),
+                      // ... (Card XP dan Star lainnya)
                     ],
                   ),
                 ),
@@ -302,25 +391,40 @@ class _VoiceScreenState extends State<VoiceScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset(
-                        'assets/images/ronald-wink.png',
-                        width: 400,
-                        height: 400,
+                        _getCurrentRonaldImage(),
+                        width: 300,
+                        height: 300,
                       ),
                       const SizedBox(height: 20),
-                      if (_isRecording)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Text(
+                          displayText,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      if (_isRecording || _isThinking)
                         SizedBox(
                           height: 50,
-                          child: CustomPaint(
-                            painter: SoundWavePainter(
-                              animation: _animationController,
-                            ),
-                            child: Container(),
-                          ),
+                          child: _isThinking
+                              ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                              : CustomPaint(
+                                  painter: SoundWavePainter(
+                                    animation: _animationController,
+                                  ),
+                                  child: Container(),
+                                ),
                         )
                       else
                         const SizedBox(
                           height: 50,
-                        ), // Placeholder agar layout stabil
+                        ),
                       const SizedBox(height: 20),
                       GestureDetector(
                         onTap: _toggleRecording,
@@ -399,8 +503,12 @@ class SoundWavePainter extends CustomPainter {
     }
   }
 
-  @override
+@override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+  @override
+  bool shouldReclip(covariant CustomPainter oldDelegate) {
     return true;
   }
 }
