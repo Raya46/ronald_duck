@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
-              opacity: 0.3,
+              opacity: 0.8,
               child: Image.asset(
                 'assets/images/bg-pattern.png',
                 width: double.infinity,
@@ -165,16 +165,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              'Sign In',
-                              style: GoogleFonts.nunito(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                      child:
+                          _isLoading
+                              ? const CircularProgressIndicator(
                                 color: Colors.white,
+                              )
+                              : Text(
+                                'Sign In',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
                     ),
                   ),
                   const SizedBox(height: 20),

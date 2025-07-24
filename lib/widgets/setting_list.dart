@@ -69,7 +69,7 @@ class _SettingScreenState extends State<SettingScreen> {
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
-              opacity: 0.3,
+              opacity: 0.8,
               child: Image.asset(
                 'assets/images/bg-pattern.png',
                 width: double.infinity,
@@ -193,7 +193,7 @@ class SettingList extends StatelessWidget {
                 color: Colors.black.withOpacity(0.05),
                 offset: const Offset(0, 4),
                 blurRadius: 10,
-              )
+              ),
             ],
           ),
           child: Row(
@@ -201,11 +201,7 @@ class SettingList extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(
-                    icon,
-                    size: 24.0,
-                    color: const Color(0xFFF39237),
-                  ),
+                  Icon(icon, size: 24.0, color: const Color(0xFFF39237)),
                   const SizedBox(width: 16),
                   Text(
                     title,

@@ -71,15 +71,17 @@ class _DailyStreakScreenState extends State<DailyStreakScreen> {
 
     final today = DateUtils.dateOnly(DateTime.now());
     final yesterday = today.subtract(const Duration(days: 1));
-    
+
     int newStreakDay = _userProfile!.currentStreakDay;
-    
+
     // Cek apakah streak berlanjut atau reset
-    if (_userProfile!.lastDailyStreakClaim == null || _userProfile!.lastDailyStreakClaim != yesterday) {
+    if (_userProfile!.lastDailyStreakClaim == null ||
+        _userProfile!.lastDailyStreakClaim != yesterday) {
       newStreakDay = 1; // Reset streak
     } else {
       newStreakDay++; // Lanjutkan streak
-      if (newStreakDay > 7) newStreakDay = 1; // Kembali ke hari 1 setelah 7 hari
+      if (newStreakDay > 7)
+        newStreakDay = 1; // Kembali ke hari 1 setelah 7 hari
     }
 
     final rewardPoints = streakData[newStreakDay - 1]['points'];
@@ -109,7 +111,9 @@ class _DailyStreakScreenState extends State<DailyStreakScreen> {
     // Pindah ke halaman pilihan hadiah dengan membawa jumlah koin
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => RewardChoiceScreen(rewardCoins: rewardPoints)),
+      MaterialPageRoute(
+        builder: (context) => RewardChoiceScreen(rewardCoins: rewardPoints),
+      ),
     );
   }
 
@@ -121,7 +125,7 @@ class _DailyStreakScreenState extends State<DailyStreakScreen> {
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
-              opacity: 0.3,
+              opacity: 0.8,
               child: Image.asset(
                 'assets/images/bg-pattern.png',
                 width: double.infinity,
@@ -132,127 +136,157 @@ class _DailyStreakScreenState extends State<DailyStreakScreen> {
           ),
           CustomPaint(painter: TopSpotlightPainter(), child: Container()),
           SafeArea(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Center(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset('assets/images/fire-streak.png', width: 150),
-                          const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              alignment: Alignment.topCenter,
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(top: 28),
-                                  padding: const EdgeInsets.fromLTRB(16, 50, 16, 24),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFDFBC5F),
-                                    borderRadius: BorderRadius.circular(30),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.15),
-                                        offset: const Offset(0, 8),
-                                        blurRadius: 15,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      GridView.builder(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 4,
-                                          crossAxisSpacing: 10,
-                                          mainAxisSpacing: 10,
-                                          childAspectRatio: 0.85,
-                                        ),
-                                        itemCount: streakData.length,
-                                        itemBuilder: (context, index) {
-                                          return DayStreakCard(
-                                            day: streakData[index]['day'],
-                                            points: streakData[index]['points'],
-                                            isClaimed: index < (_userProfile?.currentStreakDay ?? 0),
-                                          );
-                                        },
-                                      ),
-                                      const SizedBox(height: 24),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton(
-                                          onPressed: _canClaim ? _claimReward : null,
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFFFEF8E7),
-                                            disabledBackgroundColor: Colors.grey.shade300,
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 16,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            elevation: 2,
-                                          ),
-                                          child: Text(
-                                            _canClaim ? 'Ambil Hadiah' : 'Sudah Diambil',
-                                            style: GoogleFonts.poppins(
-                                              color: _canClaim ? const Color(0xFF6B4F2C) : Colors.grey.shade600,
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 18,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 40,
-                                    vertical: 14,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF39237),
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: Text(
-                                    'DAILY STREAK!',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 22,
-                                      letterSpacing: 1.5,
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: -10,
-                                  right: -10,
-                                  child: InkWell(
-                                    onTap: () => Navigator.of(context).pop(),
-                                    child: const CircleAvatar(
-                                      radius: 18,
-                                      backgroundColor: Colors.white,
-                                      child: Icon(
-                                        Icons.close,
-                                        color: Color(0xFFF39237),
-                                        size: 22,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : Center(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/fire-streak.png',
+                              width: 150,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24.0,
+                              ),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.topCenter,
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 28),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      50,
+                                      16,
+                                      24,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDFBC5F),
+                                      borderRadius: BorderRadius.circular(30),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.15),
+                                          offset: const Offset(0, 8),
+                                          blurRadius: 15,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        GridView.builder(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          gridDelegate:
+                                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 4,
+                                                crossAxisSpacing: 10,
+                                                mainAxisSpacing: 10,
+                                                childAspectRatio: 0.85,
+                                              ),
+                                          itemCount: streakData.length,
+                                          itemBuilder: (context, index) {
+                                            return DayStreakCard(
+                                              day: streakData[index]['day'],
+                                              points:
+                                                  streakData[index]['points'],
+                                              isClaimed:
+                                                  index <
+                                                  (_userProfile
+                                                          ?.currentStreakDay ??
+                                                      0),
+                                            );
+                                          },
+                                        ),
+                                        const SizedBox(height: 24),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed:
+                                                _canClaim ? _claimReward : null,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFFFEF8E7,
+                                              ),
+                                              disabledBackgroundColor:
+                                                  Colors.grey.shade300,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 16,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              elevation: 2,
+                                            ),
+                                            child: Text(
+                                              _canClaim
+                                                  ? 'Ambil Hadiah'
+                                                  : 'Sudah Diambil',
+                                              style: GoogleFonts.poppins(
+                                                color:
+                                                    _canClaim
+                                                        ? const Color(
+                                                          0xFF6B4F2C,
+                                                        )
+                                                        : Colors.grey.shade600,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 40,
+                                      vertical: 14,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF39237),
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    child: Text(
+                                      'DAILY STREAK!',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 22,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: -10,
+                                    right: -10,
+                                    child: InkWell(
+                                      onTap: () => Navigator.of(context).pop(),
+                                      child: const CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor: Colors.white,
+                                        child: Icon(
+                                          Icons.close,
+                                          color: Color(0xFFF39237),
+                                          size: 22,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
           ),
         ],
       ),

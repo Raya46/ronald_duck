@@ -70,7 +70,7 @@ class _SettingScreenState extends State<SettingScreen> {
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
-              opacity: 0.3,
+              opacity: 0.8,
               child: Image.asset(
                 'assets/images/bg-pattern.png',
                 width: double.infinity,

@@ -45,11 +45,11 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
     if (choiceType == FinancialChoiceType.tabung) {
       coinChange = 1;
       userProfile.coins += widget.rewardCoins + coinChange;
-      
+
       resultTitle = 'Kamu Telah Menabung';
       resultIcon = 'assets/images/piggy-bank.png';
-      resultBonusText = 'Nabungmu berhasil dan kamu dapat +$coinChange koin sebagai bonusnya!';
-
+      resultBonusText =
+          'Nabungmu berhasil dan kamu dapat +$coinChange koin sebagai bonusnya!';
     } else if (choiceType == FinancialChoiceType.investasi) {
       bool isSuccess = Random().nextBool();
       coinChange = isSuccess ? 5 : -2;
@@ -57,9 +57,10 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
 
       resultTitle = isSuccess ? 'Investasimu Untung!' : 'Investasimu Rugi';
       resultIcon = 'assets/images/dice.png';
-      resultBonusText = isSuccess
-          ? 'Selamat! Kamu dapat +$coinChange koin dari investasimu!'
-          : 'Yah, kamu rugi $coinChange koin. Coba lagi lain kali!';
+      resultBonusText =
+          isSuccess
+              ? 'Selamat! Kamu dapat +$coinChange koin dari investasimu!'
+              : 'Yah, kamu rugi $coinChange koin. Coba lagi lain kali!';
     }
 
     // Simpan ke Isar
@@ -73,23 +74,29 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ResultChoiceScreen(
-            title: resultTitle,
-            iconPath: resultIcon,
-            bonusText: resultBonusText,
-            rewardCoins: widget.rewardCoins, // Teruskan koin hadiah utama
-          ),
+          builder:
+              (context) => ResultChoiceScreen(
+                title: resultTitle,
+                iconPath: resultIcon,
+                bonusText: resultBonusText,
+                rewardCoins: widget.rewardCoins, // Teruskan koin hadiah utama
+              ),
         ),
       );
     }
   }
 
-  Future<void> _syncToSupabase(UserProfile profile, FinancialChoiceType choice, int coinChange) async {
+  Future<void> _syncToSupabase(
+    UserProfile profile,
+    FinancialChoiceType choice,
+    int coinChange,
+  ) async {
     try {
       // Update total koin
-      await supabase.from('user_progress').update({
-        'coins': profile.coins
-      }).eq('user_id', profile.supabaseUserId);
+      await supabase
+          .from('user_progress')
+          .update({'coins': profile.coins})
+          .eq('user_id', profile.supabaseUserId);
 
       // Catat pilihan finansial
       await supabase.from('financial_choices').insert({
@@ -103,7 +110,6 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,7 +118,7 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
-              opacity: 0.3,
+              opacity: 0.8,
               child: Image.asset(
                 'assets/images/bg-pattern.png',
                 width: double.infinity,
@@ -150,74 +156,91 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
                                 ),
                               ],
                             ),
-                            child: _isLoading
-                                ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                                : Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Mau diapakan ${widget.rewardCoins} koin hadiahmu?',
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 24,
-                                        ),
+                            child:
+                                _isLoading
+                                    ? const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
                                       ),
-                                      const SizedBox(height: 20),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: ChoiceCard(
-                                              onPress: () => _handleChoice(FinancialChoiceType.tabung),
-                                              iconPath: 'assets/images/piggy-bank.png',
-                                              title: 'Tabung',
-                                              subtitle: '( +1 )',
-                                            ),
+                                    )
+                                    : Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Mau diapakan ${widget.rewardCoins} koin hadiahmu?',
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 24,
                                           ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: ChoiceCard(
-                                              onPress: () => _handleChoice(FinancialChoiceType.investasi),
-                                              iconPath: 'assets/images/dice.png',
-                                              title: 'Investasi',
-                                              subtitle: '( +5 atau -2 )',
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 20),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFC7A24A),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
+                                        const SizedBox(height: 20),
+                                        Row(
                                           children: [
-                                            const Icon(
-                                              Icons.info,
-                                              color: Colors.white,
-                                              size: 16,
-                                            ),
-                                            const SizedBox(width: 8),
                                             Expanded(
-                                              child: Text(
-                                                'Investasi bisa untung besar, tapi juga bisa buat rugi',
-                                                style: GoogleFonts.poppins(
-                                                  color: Colors.white,
-                                                  fontSize: 11,
-                                                ),
+                                              child: ChoiceCard(
+                                                onPress:
+                                                    () => _handleChoice(
+                                                      FinancialChoiceType
+                                                          .tabung,
+                                                    ),
+                                                iconPath:
+                                                    'assets/images/piggy-bank.png',
+                                                title: 'Tabung',
+                                                subtitle: '( +1 )',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: ChoiceCard(
+                                                onPress:
+                                                    () => _handleChoice(
+                                                      FinancialChoiceType
+                                                          .investasi,
+                                                    ),
+                                                iconPath:
+                                                    'assets/images/dice.png',
+                                                title: 'Investasi',
+                                                subtitle: '( +5 atau -2 )',
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
+                                        const SizedBox(height: 20),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFC7A24A),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.info,
+                                                color: Colors.white,
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  'Investasi bisa untung besar, tapi juga bisa buat rugi',
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(

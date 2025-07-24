@@ -1,5 +1,3 @@
-// File: lib/services/isar_service.dart
-
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ronald_duck/models/game_schema.dart';
@@ -7,7 +5,7 @@ import 'package:ronald_duck/models/game_schema.dart';
 class IsarService {
   late Future<Isar> db;
 
-  // Singleton pattern untuk memastikan hanya ada satu instance dari service ini
+  // Singleton pattern
   static final IsarService _instance = IsarService._internal();
   factory IsarService() => _instance;
   IsarService._internal() {
@@ -19,7 +17,6 @@ class IsarService {
       final dir = await getApplicationDocumentsDirectory();
       return await Isar.open(
         [
-          // Daftarkan semua skema Anda di sini
           UserProfileSchema,
           ShopItemSchema,
           UserInventoryItemSchema,
@@ -29,7 +26,7 @@ class IsarService {
           AppSettingsSchema,
         ],
         directory: dir.path,
-        inspector: true, // Berguna untuk debugging
+        inspector: true,
       );
     }
     return Future.value(Isar.getInstance());
@@ -39,24 +36,22 @@ class IsarService {
 
   Future<void> saveUserProfile(UserProfile profile) async {
     final isar = await db;
-    await isar.writeTxn(() async {
-      await isar.userProfiles.put(profile);
-    });
+    await isar.writeTxn(() => isar.userProfiles.put(profile));
   }
 
   Future<UserProfile?> getUserProfile(String supabaseUserId) async {
     final isar = await db;
-    return await isar.userProfiles.where().supabaseUserIdEqualTo(supabaseUserId).findFirst();
+    return await isar.userProfiles
+        .where()
+        .supabaseUserIdEqualTo(supabaseUserId)
+        .findFirst();
   }
 
   // --- ShopItem Operations ---
 
   Future<void> saveShopItems(List<ShopItem> items) async {
     final isar = await db;
-    await isar.writeTxn(() async {
-      // Menggunakan putAllBy untuk efisiensi dan menghindari duplikat berdasarkan supabaseItemId
-      await isar.shopItems.putAllBySupabaseItemId(items);
-    });
+    await isar.writeTxn(() => isar.shopItems.putAllBySupabaseItemId(items));
   }
 
   Future<List<ShopItem>> getShopItems() async {
@@ -64,9 +59,13 @@ class IsarService {
     return await isar.shopItems.where().findAll();
   }
 
-  Future<ShopItem?> getShopItemBySupabaseId(int supabaseId) async {
+  Future<ShopItem?> getShopItemBySupabaseId(int? supabaseId) async {
+    if (supabaseId == null) return null;
     final isar = await db;
-    return await isar.shopItems.where().supabaseItemIdEqualTo(supabaseId).findFirst();
+    return await isar.shopItems
+        .where()
+        .supabaseItemIdEqualTo(supabaseId)
+        .findFirst();
   }
 
   // --- Inventory & Equipped Items Operations ---
@@ -75,22 +74,46 @@ class IsarService {
     final isar = await db;
     final newInventoryItem = UserInventoryItem(
       purchasedAt: DateTime.now(),
-      needsSync: true, // Tandai untuk sinkronisasi
+      needsSync: true,
     );
 
     await isar.writeTxn(() async {
-      // Simpan item inventaris baru terlebih dahulu
       await isar.userInventoryItems.put(newInventoryItem);
-      
-      // Hubungkan item dengan pengguna dan item toko
       newInventoryItem.user.value = user;
       newInventoryItem.item.value = item;
-      
-      // Simpan perubahan pada link.
-      // Metode .save() mengembalikan Future<void>, artinya tidak ada nilai yang dikembalikan.
-      // Cukup 'await' untuk memastikan operasi selesai sebelum melanjutkan.
       await newInventoryItem.user.save();
       await newInventoryItem.item.save();
+    });
+  }
+
+  // --- FUNGSI BARU YANG DITAMBAHKAN ---
+  Future<void> syncUserInventory(
+    UserProfile user,
+    Set<int> supabaseInventoryIds,
+  ) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      // Hapus inventaris lokal yang lama
+      await user.inventory.load();
+      await isar.userInventoryItems.deleteAll(
+        user.inventory.map((e) => e.id).toList(),
+      );
+      user.inventory.clear();
+
+      // Buat ulang inventaris lokal berdasarkan data dari Supabase
+      for (final itemId in supabaseInventoryIds) {
+        final shopItem = await isar.shopItems.getBySupabaseItemId(itemId);
+        if (shopItem != null) {
+          final newInventoryItem = UserInventoryItem(
+            purchasedAt: DateTime.now(),
+          );
+          await isar.userInventoryItems.put(newInventoryItem);
+          newInventoryItem.item.value = shopItem;
+          await newInventoryItem.item.save();
+          user.inventory.add(newInventoryItem);
+        }
+      }
+      await user.inventory.save();
     });
   }
 
@@ -98,8 +121,8 @@ class IsarService {
     final isar = await db;
     await isar.writeTxn(() async {
       await user.equippedItems.load();
-      EquippedItems? currentEquipped = user.equippedItems.value;
-      currentEquipped ??= EquippedItems();
+      EquippedItems currentEquipped =
+          user.equippedItems.value ?? EquippedItems();
 
       switch (itemToEquip.type) {
         case ItemType.hat:
@@ -112,18 +135,31 @@ class IsarService {
           currentEquipped.shirt.value = itemToEquip;
           break;
       }
-      // Simpan perubahan pada objek EquippedItems
       await isar.equippedItems.put(currentEquipped);
-
-      // Hubungkan objek EquippedItems yang baru ke profil pengguna
       user.equippedItems.value = currentEquipped;
+      await user.equippedItems.save();
+    });
+  }
+
+  Future<void> updateEquippedItems(
+    UserProfile user,
+    EquippedItems equipped,
+  ) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.equippedItems.put(equipped);
+      user.equippedItems.value = equipped;
       await user.equippedItems.save();
     });
   }
 
   // --- History Operations ---
 
-  Future<void> addQuestHistory(UserProfile user, QuestTopic topic, bool isCorrect) async {
+  Future<void> addQuestHistory(
+    UserProfile user,
+    QuestTopic topic,
+    bool isCorrect,
+  ) async {
     final isar = await db;
     final history = QuestHistory(
       topic: topic,
@@ -139,7 +175,11 @@ class IsarService {
     });
   }
 
-  Future<void> addFinancialChoice(UserProfile user, FinancialChoiceType choice, int coinChange) async {
+  Future<void> addFinancialChoice(
+    UserProfile user,
+    FinancialChoiceType choice,
+    int coinChange,
+  ) async {
     final isar = await db;
     final financialChoice = FinancialChoice(
       choiceType: choice,
@@ -159,15 +199,12 @@ class IsarService {
 
   Future<AppSettings> getAppSettings() async {
     final isar = await db;
-    // Biasanya hanya akan ada satu entri pengaturan
     final settings = await isar.appSettings.where().findFirst();
-    return settings ?? AppSettings(); // Kembalikan default jika tidak ada
+    return settings ?? AppSettings();
   }
 
   Future<void> saveAppSettings(AppSettings settings) async {
     final isar = await db;
-    await isar.writeTxn(() async {
-      await isar.appSettings.put(settings);
-    });
+    await isar.writeTxn(() => isar.appSettings.put(settings));
   }
 }

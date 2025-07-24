@@ -108,7 +108,7 @@ class _InsertPasswordState extends State<InsertPassword> {
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
-              opacity: 0.3,
+              opacity: 0.8,
               child: Image.asset(
                 'assets/images/bg-pattern.png',
                 width: double.infinity,
@@ -177,7 +177,8 @@ class _InsertPasswordState extends State<InsertPassword> {
                               width: double.infinity,
                               height: 50,
                               child: ElevatedButton(
-                                onPressed: _isLoading ? null : _validateParentPassword,
+                                onPressed:
+                                    _isLoading ? null : _validateParentPassword,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: fieldColor,
                                   padding: const EdgeInsets.symmetric(
@@ -188,23 +189,24 @@ class _InsertPasswordState extends State<InsertPassword> {
                                   ),
                                   elevation: 2,
                                 ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          color: textDarkColor,
-                                          strokeWidth: 3,
+                                child:
+                                    _isLoading
+                                        ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: textDarkColor,
+                                            strokeWidth: 3,
+                                          ),
+                                        )
+                                        : Text(
+                                          'Masuk',
+                                          style: GoogleFonts.poppins(
+                                            color: textDarkColor,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+                                          ),
                                         ),
-                                      )
-                                    : Text(
-                                        'Masuk',
-                                        style: GoogleFonts.poppins(
-                                          color: textDarkColor,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 18,
-                                        ),
-                                      ),
                               ),
                             ),
                           ],

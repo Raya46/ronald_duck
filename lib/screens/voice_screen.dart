@@ -22,7 +22,8 @@ class VoiceScreen extends StatefulWidget {
 }
 
 class _VoiceScreenState extends State<VoiceScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  // Menggunakan TickerProviderStateMixin untuk beberapa controller
   final IsarService isarService = IsarService();
   final supabase = Supabase.instance.client;
 
@@ -31,7 +32,12 @@ class _VoiceScreenState extends State<VoiceScreen>
   bool _isRecording = false;
   bool _isThinking = false;
   bool _isSpeaking = false;
-  late AnimationController _animationController;
+
+  late AnimationController _waveAnimationController;
+  late AnimationController
+  _speakingAnimationController; // Controller baru untuk animasi berbicara
+  late Animation<double> _speakingAnimation;
+
   final SpeechToText _speechToText = SpeechToText();
   String _lastWords = '';
   String _subtitleText = '';
@@ -41,10 +47,23 @@ class _VoiceScreenState extends State<VoiceScreen>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+    _waveAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
+
+    _speakingAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _speakingAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(
+        parent: _speakingAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     _initSpeech();
     _fetchUserData();
   }
@@ -82,7 +101,8 @@ class _VoiceScreenState extends State<VoiceScreen>
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _waveAnimationController.dispose();
+    _speakingAnimationController.dispose(); // Dispose controller baru
     _speechToText.stop();
     _subtitleTimer?.cancel();
     _audioPlayer.dispose();
@@ -91,7 +111,6 @@ class _VoiceScreenState extends State<VoiceScreen>
 
   Future<void> _toggleRecording() async {
     if (_isRecording || _isThinking || _isSpeaking) return;
-
     if (_userProfile == null) return;
 
     const int xpCost = 10;
@@ -100,7 +119,9 @@ class _VoiceScreenState extends State<VoiceScreen>
     if (_userProfile!.xp < xpCost || _userProfile!.coins < coinCost) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Kamu butuh $xpCost XP dan $coinCost Koin untuk bertanya!'),
+          content: Text(
+            'Kamu butuh $xpCost XP dan $coinCost Koin untuk bertanya!',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -116,7 +137,6 @@ class _VoiceScreenState extends State<VoiceScreen>
       });
       await isarService.saveUserProfile(_userProfile!);
       _syncCostToSupabase(xpCost, coinCost);
-
 
       setState(() {
         _lastWords = '';
@@ -139,24 +159,28 @@ class _VoiceScreenState extends State<VoiceScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Izin mikrofon diperlukan untuk menggunakan fitur ini.'),
+            content: Text(
+              'Izin mikrofon diperlukan untuk menggunakan fitur ini.',
+            ),
           ),
         );
       }
     }
   }
-  
+
   Future<void> _syncCostToSupabase(int xpCost, int coinCost) async {
     if (_userProfile == null) return;
     try {
-      await supabase.rpc('deduct_resources', params: {
-        'p_user_id': _userProfile!.supabaseUserId,
-        'p_xp_cost': xpCost,
-        'p_coin_cost': coinCost
-      });
+      await supabase.rpc(
+        'deduct_resources',
+        params: {
+          'p_user_id': _userProfile!.supabaseUserId,
+          'p_xp_cost': xpCost,
+          'p_coin_cost': coinCost,
+        },
+      );
     } catch (e) {
       print("Error syncing cost to Supabase: $e");
-      // TODO: Tambahkan logika retry jika gagal
     }
   }
 
@@ -168,9 +192,8 @@ class _VoiceScreenState extends State<VoiceScreen>
       _subtitleText = 'Ronald sedang berpikir...';
     });
 
-    final apiKey = dotenv.env['OPENROUTER_API_KEY'] ?? '';
+    final apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
     if (apiKey.isEmpty) {
-      print('API Key OpenRouter tidak ditemukan di .env');
       setState(() {
         _isThinking = false;
         _subtitleText = 'API Key tidak ditemukan.';
@@ -182,7 +205,6 @@ class _VoiceScreenState extends State<VoiceScreen>
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $apiKey',
     };
-
     final body = jsonEncode({
       "model": "openai/gpt-4o-mini",
       "messages": [
@@ -206,16 +228,11 @@ class _VoiceScreenState extends State<VoiceScreen>
         final decodedResponse = jsonDecode(utf8.decode(response.bodyBytes));
         final responseText =
             decodedResponse['choices'][0]['message']['content'] ??
-                'Tidak ada respons dari AI.';
-
-        setState(() {
-          _subtitleText = '';
-        });
+            'Tidak ada respons dari AI.';
+        setState(() => _subtitleText = '');
         _speakWithElevenLabsAPI(responseText);
       } else {
         final errorText = 'Gagal menghubungi AI. Kode: ${response.statusCode}';
-        print('Error dari OpenRouter: ${response.statusCode}');
-        print('Body Error: ${response.body}');
         setState(() {
           _isThinking = false;
           _subtitleText = errorText;
@@ -223,7 +240,6 @@ class _VoiceScreenState extends State<VoiceScreen>
       }
     } catch (e) {
       final errorText = 'Terjadi kesalahan jaringan. Coba lagi.';
-      print('Error: $e');
       setState(() {
         _isThinking = false;
         _subtitleText = errorText;
@@ -236,17 +252,14 @@ class _VoiceScreenState extends State<VoiceScreen>
       setState(() => _isThinking = false);
       return;
     }
-    
-    setState(() {
-      _subtitleText = 'Ronald sedang berpikir...';
-    });
+
+    setState(() => _subtitleText = 'Ronald sedang berpikir...');
 
     final apiKey = dotenv.env['ELEVENLABS_API_KEY'];
     const voiceId = "iWydkXKoiVtvdn4vLKp9";
     final url = "https://api.elevenlabs.io/v1/text-to-speech/$voiceId";
 
     if (apiKey == null || apiKey.isEmpty) {
-      print("ElevenLabs API key not found");
       setState(() {
         _isThinking = false;
         _subtitleText = "ElevenLabs API key not found";
@@ -257,14 +270,8 @@ class _VoiceScreenState extends State<VoiceScreen>
     try {
       final response = await http.post(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'xi-api-key': apiKey,
-        },
-        body: jsonEncode({
-          "text": text,
-          "model_id": "eleven_multilingual_v2",
-        }),
+        headers: {'Content-Type': 'application/json', 'xi-api-key': apiKey},
+        body: jsonEncode({"text": text, "model_id": "eleven_multilingual_v2"}),
       );
 
       if (response.statusCode == 200) {
@@ -274,25 +281,24 @@ class _VoiceScreenState extends State<VoiceScreen>
         await file.writeAsBytes(response.bodyBytes);
 
         await _audioPlayer.stop();
-        
+
         setState(() {
           _isThinking = false;
-          _isSpeaking = true; // Mulai berbicara
+          _isSpeaking = true;
         });
-        
+
+        _speakingAnimationController.repeat(
+          reverse: true,
+        ); // Mulai animasi berbicara
         await _audioPlayer.play(DeviceFileSource(filePath));
         _startSubtitleTimer(text);
-
       } else {
-        print("Error from ElevenLabs API: ${response.statusCode}");
-        print("Response Body: ${response.body}");
         setState(() {
           _isThinking = false;
           _subtitleText = "Gagal memuat audio.";
         });
       }
     } catch (e) {
-      print("Error calling ElevenLabs API: $e");
       setState(() {
         _isThinking = false;
         _subtitleText = "Gagal memuat audio.";
@@ -302,52 +308,59 @@ class _VoiceScreenState extends State<VoiceScreen>
 
   void _startSubtitleTimer(String fullText) async {
     _subtitleTimer?.cancel();
-    
+
     await Future.delayed(const Duration(milliseconds: 200));
     final audioDuration = await _audioPlayer.getDuration();
-    
+
     final words = fullText.split(' ');
-    if (words.isEmpty || audioDuration == null || audioDuration.inMilliseconds == 0) {
+    if (words.isEmpty ||
+        audioDuration == null ||
+        audioDuration.inMilliseconds == 0) {
       setState(() => _subtitleText = fullText);
       return;
     }
 
     const chunkSize = 4;
-    final double delayPerChunk = (audioDuration.inMilliseconds / words.length) * chunkSize;
+    final double delayPerChunk =
+        (audioDuration.inMilliseconds / words.length) * chunkSize;
     int wordIndex = 0;
 
-    _subtitleTimer = Timer.periodic(Duration(milliseconds: delayPerChunk.round()), (timer) {
-      if (wordIndex < words.length) {
-        if (mounted) {
-          final end = (wordIndex + chunkSize > words.length) ? words.length : wordIndex + chunkSize;
-          setState(() {
-            _subtitleText = words.sublist(wordIndex, end).join(' ');
-          });
+    _subtitleTimer = Timer.periodic(
+      Duration(milliseconds: delayPerChunk.round()),
+      (timer) {
+        if (wordIndex < words.length) {
+          if (mounted) {
+            final end =
+                (wordIndex + chunkSize > words.length)
+                    ? words.length
+                    : wordIndex + chunkSize;
+            setState(
+              () => _subtitleText = words.sublist(wordIndex, end).join(' '),
+            );
+          }
+          wordIndex += chunkSize;
+        } else {
+          timer.cancel();
         }
-        wordIndex += chunkSize;
-      } else {
-        timer.cancel();
-      }
-    });
+      },
+    );
 
     _audioPlayer.onPlayerComplete.first.then((_) {
       _subtitleTimer?.cancel();
-      if(mounted) {
+      if (mounted) {
         setState(() {
           _isSpeaking = false;
-          _subtitleText = ''; // Kosongkan subtitel setelah selesai
+          _subtitleText = '';
         });
+        _speakingAnimationController.stop(); // Hentikan animasi berbicara
+        _speakingAnimationController.reset();
       }
     });
   }
 
   String _getCurrentRonaldImage() {
-    if (_isThinking) {
-      return 'assets/images/ronald-wrong.png';
-    }
-    if (_isSpeaking) {
-      return 'assets/images/ronald-adult.png';
-    }
+    if (_isThinking) return 'assets/images/ronald-wrong.png';
+    if (_isSpeaking) return 'assets/images/ronald-adult.png';
     return 'assets/images/ronald-wink.png';
   }
 
@@ -390,141 +403,139 @@ class _VoiceScreenState extends State<VoiceScreen>
               ),
             ),
           ),
-          ...List.generate(
-            20,
-            (index) => Positioned(
-              top:
-                  Random().nextDouble() *
-                  MediaQuery.of(context).size.height *
-                  0.6,
-              left: Random().nextDouble() * MediaQuery.of(context).size.width,
-              child: FadeTransition(
-                opacity: _animationController,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ),
-          ),
           SafeArea(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          _buildInfoCard(Icons.local_fire_department, Colors.orange, '${_userProfile?.xp ?? 0}'),
-                          const SizedBox(width: 4),
-                          _buildInfoCard(Icons.star, Colors.amber, '${_userProfile?.coins ?? 0}'),
-                        ],
-                      ),
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.settings),
-                          onPressed: () {},
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        _getCurrentRonaldImage(),
-                        width: 300,
-                        height: 300,
-                      ),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Text(
-                          displayText,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      if (_isRecording || _isThinking)
-                        SizedBox(
-                          height: 50,
-                          child: _isThinking
-                              ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                              : CustomPaint(
-                                  painter: SoundWavePainter(
-                                    animation: _animationController,
-                                  ),
-                                  child: Container(),
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Card(
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                        )
-                      else
-                        const SizedBox(
-                          height: 50,
-                        ),
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: _toggleRecording,
-                        child: Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                                child: IconButton(
+                                  icon: const Icon(Icons.arrow_back),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  _buildInfoCard(
+                                    Icons.local_fire_department,
+                                    Colors.orange,
+                                    _userProfile?.xp ?? 0,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  _buildInfoCard(
+                                    Icons.star,
+                                    Colors.amber,
+                                    _userProfile?.coins ?? 0,
+                                  ),
+                                ],
+                              ),
+                              Card(
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.settings),
+                                  onPressed: () {},
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Image.asset(
-                              _isRecording
-                                  ? 'assets/images/stop.png'
-                                  : 'assets/images/voice.png',
-                              width: 60,
-                              height: 60,
-                            ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ScaleTransition(
+                                scale: _speakingAnimation,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Image.asset(
+                                    _getCurrentRonaldImage(),
+                                    key: ValueKey<String>(
+                                      _getCurrentRonaldImage(),
+                                    ), // Penting untuk transisi
+                                    width: 500,
+                                    height: 500,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10.0,
+                                ),
+                                child: Text(
+                                  displayText,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              if (_isRecording || _isThinking)
+                                SizedBox(
+                                  height: 30,
+                                  child:
+                                      _isThinking
+                                          ? const Center(
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                          : CustomPaint(
+                                            painter: SoundWavePainter(
+                                              animation:
+                                                  _waveAnimationController,
+                                            ),
+                                            child: Container(),
+                                          ),
+                                )
+                              else
+                                const SizedBox(height: 30),
+                              GestureDetector(
+                                onTap: _toggleRecording,
+                                child: Card(
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Image.asset(
+                                      _isRecording
+                                          ? 'assets/images/stop.png'
+                                          : 'assets/images/voice.png',
+                                      width: 60,
+                                      height: 60,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                      ],
+                    ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard(IconData icon, Color color, String text) {
+  Widget _buildInfoCard(IconData icon, Color color, int value) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -533,11 +544,31 @@ class _VoiceScreenState extends State<VoiceScreen>
         child: Row(
           children: [
             Icon(icon, color: color, size: 18),
-            const SizedBox(width: 4),
-            Text(text, style: GoogleFonts.nunito()),
+            const SizedBox(width: 8),
+            AnimatedCount(count: value), // Menggunakan widget animasi
           ],
         ),
       ),
+    );
+  }
+}
+
+// WIDGET BARU UNTUK ANIMASI ANGKA
+class AnimatedCount extends StatelessWidget {
+  final int count;
+  const AnimatedCount({super.key, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<int>(
+      tween: IntTween(begin: count, end: count),
+      duration: const Duration(milliseconds: 300),
+      builder: (context, value, child) {
+        return Text(
+          value.toString(),
+          style: GoogleFonts.nunito(fontWeight: FontWeight.bold),
+        );
+      },
     );
   }
 }
@@ -555,9 +586,7 @@ class ArcClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldDelegate) {
-    return false;
-  }
+  bool shouldReclip(covariant CustomClipper<Path> oldDelegate) => false;
 }
 
 class SoundWavePainter extends CustomPainter {
@@ -589,7 +618,5 @@ class SoundWavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
