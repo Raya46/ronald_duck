@@ -1,6 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ronald_duck/models/game_schema.dart';
+import 'package:ronald_duck/service/game_service.dart';
 import 'dart:math';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -9,7 +11,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'dart:async'; // Import untuk Timer
+import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class VoiceScreen extends StatefulWidget {
   const VoiceScreen({super.key});
@@ -20,15 +23,20 @@ class VoiceScreen extends StatefulWidget {
 
 class _VoiceScreenState extends State<VoiceScreen>
     with SingleTickerProviderStateMixin {
+  final IsarService isarService = IsarService();
+  final supabase = Supabase.instance.client;
+
+  bool _isLoading = true;
+  UserProfile? _userProfile;
   bool _isRecording = false;
   bool _isThinking = false;
   bool _isSpeaking = false;
   late AnimationController _animationController;
   final SpeechToText _speechToText = SpeechToText();
   String _lastWords = '';
-  String _subtitleText = ''; // State untuk teks subtitel
+  String _subtitleText = '';
   final AudioPlayer _audioPlayer = AudioPlayer();
-  Timer? _subtitleTimer; // Timer untuk subtitel
+  Timer? _subtitleTimer;
 
   @override
   void initState() {
@@ -38,6 +46,22 @@ class _VoiceScreenState extends State<VoiceScreen>
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
     _initSpeech();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId != null) {
+      final userProfile = await isarService.getUserProfile(userId);
+      if (mounted) {
+        setState(() {
+          _userProfile = userProfile;
+          _isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _initSpeech() async {
@@ -60,49 +84,79 @@ class _VoiceScreenState extends State<VoiceScreen>
   void dispose() {
     _animationController.dispose();
     _speechToText.stop();
-    _subtitleTimer?.cancel(); // Batalkan timer saat dispose
+    _subtitleTimer?.cancel();
     _audioPlayer.dispose();
     super.dispose();
   }
 
-  void _toggleRecording() async {
+  Future<void> _toggleRecording() async {
     if (_isRecording || _isThinking || _isSpeaking) return;
 
-    if (await _speechToText.isListening) {
-      _speechToText.stop();
-      setState(() => _isRecording = false);
-    } else {
-      var status = await Permission.microphone.request();
+    if (_userProfile == null) return;
 
-      if (status.isGranted) {
-        setState(() {
-          _lastWords = '';
-          _subtitleText = ''; // Reset subtitel
-        });
-        _speechToText.listen(
-          onResult: (result) {
-            setState(() => _lastWords = result.recognizedWords);
-            if (result.finalResult) {
-              _sendToOpenRouter(_lastWords);
-            }
-          },
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 5),
-          localeId: 'id_ID',
+    const int xpCost = 10;
+    const int coinCost = 3;
+
+    if (_userProfile!.xp < xpCost || _userProfile!.coins < coinCost) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kamu butuh $xpCost XP dan $coinCost Koin untuk bertanya!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    var status = await Permission.microphone.request();
+
+    if (status.isGranted) {
+      setState(() {
+        _userProfile!.xp -= xpCost;
+        _userProfile!.coins -= coinCost;
+      });
+      await isarService.saveUserProfile(_userProfile!);
+      _syncCostToSupabase(xpCost, coinCost);
+
+
+      setState(() {
+        _lastWords = '';
+        _subtitleText = '';
+      });
+      _speechToText.listen(
+        onResult: (result) {
+          setState(() => _lastWords = result.recognizedWords);
+          if (result.finalResult) {
+            _sendToOpenRouter(_lastWords);
+          }
+        },
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 5),
+        localeId: 'id_ID',
+      );
+      setState(() => _isRecording = true);
+    } else {
+      print('Izin mikrofon ditolak oleh pengguna.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Izin mikrofon diperlukan untuk menggunakan fitur ini.'),
+          ),
         );
-        setState(() => _isRecording = true);
-      } else {
-        print('Izin mikrofon ditolak oleh pengguna.');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Izin mikrofon diperlukan untuk menggunakan fitur ini.',
-              ),
-            ),
-          );
-        }
       }
+    }
+  }
+  
+  Future<void> _syncCostToSupabase(int xpCost, int coinCost) async {
+    if (_userProfile == null) return;
+    try {
+      await supabase.rpc('deduct_resources', params: {
+        'p_user_id': _userProfile!.supabaseUserId,
+        'p_xp_cost': xpCost,
+        'p_coin_cost': coinCost
+      });
+    } catch (e) {
+      print("Error syncing cost to Supabase: $e");
+      // TODO: Tambahkan logika retry jika gagal
     }
   }
 
@@ -114,7 +168,7 @@ class _VoiceScreenState extends State<VoiceScreen>
       _subtitleText = 'Ronald sedang berpikir...';
     });
 
-    final apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
+    final apiKey = dotenv.env['OPENROUTER_API_KEY'] ?? '';
     if (apiKey.isEmpty) {
       print('API Key OpenRouter tidak ditemukan di .env');
       setState(() {
@@ -258,7 +312,7 @@ class _VoiceScreenState extends State<VoiceScreen>
       return;
     }
 
-    const chunkSize = 3;
+    const chunkSize = 4;
     final double delayPerChunk = (audioDuration.inMilliseconds / words.length) * chunkSize;
     int wordIndex = 0;
 
@@ -358,7 +412,9 @@ class _VoiceScreenState extends State<VoiceScreen>
             ),
           ),
           SafeArea(
-            child: Column(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -378,7 +434,23 @@ class _VoiceScreenState extends State<VoiceScreen>
                           },
                         ),
                       ),
-                      // ... (Card XP dan Star lainnya)
+                      Row(
+                        children: [
+                          _buildInfoCard(Icons.local_fire_department, Colors.orange, '${_userProfile?.xp ?? 0}'),
+                          const SizedBox(width: 4),
+                          _buildInfoCard(Icons.star, Colors.amber, '${_userProfile?.coins ?? 0}'),
+                        ],
+                      ),
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.settings),
+                          onPressed: () {},
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -451,6 +523,23 @@ class _VoiceScreenState extends State<VoiceScreen>
       ),
     );
   }
+
+  Widget _buildInfoCard(IconData icon, Color color, String text) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 4),
+            Text(text, style: GoogleFonts.nunito()),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class ArcClipper extends CustomClipper<Path> {
@@ -466,7 +555,7 @@ class ArcClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
+  bool shouldReclip(covariant CustomClipper<Path> oldDelegate) {
     return false;
   }
 }
@@ -499,11 +588,8 @@ class SoundWavePainter extends CustomPainter {
     }
   }
 
-@override
+  @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
-  bool shouldReclip(covariant CustomPainter oldDelegate) {
     return true;
   }
 }

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:ronald_duck/screens/home_screen.dart';
 import 'package:ronald_duck/screens/login_screen.dart';
 import 'package:ronald_duck/screens/setting/about_app_screen.dart';
 import 'package:ronald_duck/screens/setting/contact_screen.dart';
 import 'package:ronald_duck/screens/setting/insert_password_screen.dart';
 import 'package:ronald_duck/screens/setting/play_time_screen.dart';
 import 'package:ronald_duck/screens/setting/theme_music_screen.dart';
+import 'package:ronald_duck/service/game_service.dart';
 import 'package:ronald_duck/widgets/setting_list.dart';
 import 'package:ronald_duck/widgets/setting_placeholder.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -16,6 +19,49 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
+  final IsarService isarService = IsarService();
+  bool _isLoading = false;
+
+  Future<void> _signOut() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 1. Logout dari Supabase
+      await Supabase.instance.client.auth.signOut();
+
+      // 2. Hapus semua data dari database lokal Isar
+      final isar = await isarService.db;
+      await isar.writeTxn(() async {
+        await isar.clear();
+      });
+
+      // 3. Navigasi ke LoginScreen dan hapus semua halaman sebelumnya
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal untuk logout: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,7 +93,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => PlayTimerScreen(),
+                            builder: (context) => const PlayTimerScreen(),
                           ),
                         );
                       },
@@ -59,7 +105,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ThemeMusicScreen(),
+                            builder: (context) => const ThemeMusicScreen(),
                           ),
                         );
                       },
@@ -71,7 +117,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => InsertPassword(),
+                            builder: (context) => const InsertPassword(),
                           ),
                         );
                       },
@@ -83,7 +129,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AboutAppScreen(),
+                            builder: (context) => const AboutAppScreen(),
                           ),
                         );
                       },
@@ -95,7 +141,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ContactScreen(),
+                            builder: (context) => const ContactScreen(),
                           ),
                         );
                       },
@@ -103,12 +149,16 @@ class _SettingScreenState extends State<SettingScreen> {
                     SettingList(
                       icon: Icons.logout_outlined,
                       title: "Logout",
+                      isLoading: _isLoading,
+                      onPress: _isLoading ? null : _signOut,
+                    ),
+                    SettingList(
+                      icon: Icons.home_outlined,
+                      title: "Back to home",
                       onPress: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => LoginScreen(),
-                          ),
+                          MaterialPageRoute(builder: (context) => HomeScreen()),
                         );
                       },
                     ),

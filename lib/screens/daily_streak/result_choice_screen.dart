@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ronald_duck/screens/home_screen.dart';
-import 'package:ronald_duck/widgets/top_spotlight_painter.dart';
 
 class ResultChoiceScreen extends StatelessWidget {
   final String title;
   final String iconPath;
   final String bonusText;
+  final int rewardCoins; // Parameter ini tetap ada
 
   const ResultChoiceScreen({
     super.key,
     required this.title,
     required this.iconPath,
     required this.bonusText,
+    required this.rewardCoins, // Wajib diisi
   });
 
   @override
@@ -20,7 +21,7 @@ class ResultChoiceScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Lapis 1: Background Warna
+          // Lapis 1: Background Warna dan Pola
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
@@ -33,12 +34,7 @@ class ResultChoiceScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Lapis 2: Efek Spotlight
-          CustomPaint(
-            painter: TopSpotlightPainter(),
-            child: Container(),
-          ),
-          // Lapis 3: Konten Utama
+          // Lapis 2: Konten Utama (Efek Spotlight dihapus)
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -92,7 +88,7 @@ class ResultChoiceScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      '50 Koin',
+                                      '$rewardCoins Koin', // Menggunakan nilai dinamis
                                       style: GoogleFonts.poppins(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
@@ -128,7 +124,8 @@ class ResultChoiceScreen extends StatelessWidget {
                                     Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const HomeScreen(),
+                                        builder:
+                                            (context) => const HomeScreen(),
                                       ),
                                       (Route<dynamic> route) => false,
                                     );
@@ -180,3 +177,4 @@ class ResultChoiceScreen extends StatelessWidget {
   }
 }
 
+// Class TopSpotlightPainter dihapus dari file ini

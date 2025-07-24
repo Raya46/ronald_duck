@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:ronald_duck/screens/login_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:ronald_duck/screens/splash_screen.dart';
+import 'package:ronald_duck/service/game_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); 
+// Buat instance global dari IsarService
+final isarService = IsarService();
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   try {
-    await dotenv.load(fileName: ".env"); 
+    await dotenv.load(fileName: ".env");
   } catch (e) {
-    throw Exception('Error loading .env file: $e'); 
+    throw Exception('Error loading .env file: $e');
   }
-  runApp(const MyApp()); 
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+  );
+  
+  // Tunggu hingga database Isar siap sebelum menjalankan aplikasi
+  await isarService.db;
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -17,6 +30,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Ronald Duck', home: LoginScreen());
+    return const MaterialApp(
+      title: 'Ronald Duck',
+      home: SplashScreen(),
+    );
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ronald_duck/models/game_schema.dart';
 import 'package:ronald_duck/screens/parent/parent_dashboard_screen.dart';
+import 'package:ronald_duck/service/game_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class InsertPassword extends StatefulWidget {
   const InsertPassword({super.key});
@@ -10,6 +13,86 @@ class InsertPassword extends StatefulWidget {
 }
 
 class _InsertPasswordState extends State<InsertPassword> {
+  final _passwordController = TextEditingController();
+  final _isarService = IsarService();
+  bool _isLoading = false;
+
+  Future<void> _validateParentPassword() async {
+    if (_passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password tidak boleh kosong'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      // Handle jika tidak ada user yang login
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak ada pengguna yang aktif.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    // Ambil profil dari database lokal Isar
+    final UserProfile? userProfile = await _isarService.getUserProfile(userId);
+
+    if (userProfile != null) {
+      // TODO: Ganti perbandingan ini dengan verifikasi hash di aplikasi production
+      // Contoh: if (bcrypt.checkpw(enteredPassword, storedHash))
+      if (userProfile.parentPassword == _passwordController.text.trim()) {
+        // Jika password cocok, navigasi ke dashboard
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ParentDashboardScreen(),
+            ),
+          );
+        }
+      } else {
+        // Jika password salah
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password orang tua salah!'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } else {
+      // Jika profil tidak ditemukan di lokal
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profil pengguna tidak ditemukan.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color primaryBorderColor = Color(0xFFE4B34B);
@@ -57,6 +140,7 @@ class _InsertPasswordState extends State<InsertPassword> {
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
                       Container(
                         padding: const EdgeInsets.fromLTRB(24, 100, 24, 32),
@@ -69,6 +153,7 @@ class _InsertPasswordState extends State<InsertPassword> {
                           children: [
                             const SizedBox(height: 20),
                             TextField(
+                              controller: _passwordController,
                               obscureText: true,
                               decoration: InputDecoration(
                                 hintText: 'Tulis password',
@@ -90,17 +175,9 @@ class _InsertPasswordState extends State<InsertPassword> {
                             const SizedBox(height: 24),
                             SizedBox(
                               width: double.infinity,
+                              height: 50,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) =>
-                                              const ParentDashboardScreen(),
-                                    ),
-                                  );
-                                },
+                                onPressed: _isLoading ? null : _validateParentPassword,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: fieldColor,
                                   padding: const EdgeInsets.symmetric(
@@ -111,14 +188,23 @@ class _InsertPasswordState extends State<InsertPassword> {
                                   ),
                                   elevation: 2,
                                 ),
-                                child: Text(
-                                  'Masuk',
-                                  style: GoogleFonts.poppins(
-                                    color: textDarkColor,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 18,
-                                  ),
-                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: textDarkColor,
+                                          strokeWidth: 3,
+                                        ),
+                                      )
+                                    : Text(
+                                        'Masuk',
+                                        style: GoogleFonts.poppins(
+                                          color: textDarkColor,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 18,
+                                        ),
+                                      ),
                               ),
                             ),
                           ],
