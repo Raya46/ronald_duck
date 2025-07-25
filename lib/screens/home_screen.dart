@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ronald_duck/config/accessory_config.dart'; // Impor file konfigurasi
 import 'package:ronald_duck/models/game_schema.dart';
 import 'package:ronald_duck/screens/daily_streak/daily_streak_screen.dart';
 import 'package:ronald_duck/screens/quest_screen.dart';
@@ -7,6 +8,7 @@ import 'package:ronald_duck/screens/setting_screen.dart';
 import 'package:ronald_duck/screens/shop_screen.dart';
 import 'package:ronald_duck/screens/voice_screen.dart';
 import 'package:ronald_duck/service/game_service.dart';
+import 'package:sizer/sizer.dart'; // Impor Sizer
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -47,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen>
     _fetchUserData();
   }
 
+  // --- Metode logika data tidak berubah ---
   Future<void> _fetchUserData() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
@@ -141,6 +144,8 @@ class _HomeScreenState extends State<HomeScreen>
       _equippedItems = _userProfile!.equippedItems.value;
 
       if (_equippedItems == null) {
+        _equippedItems = EquippedItems();
+        await isarService.updateEquippedItems(_userProfile!, _equippedItems!);
         await _refreshEquippedItemsFromSupabase(userId);
       } else {
         if (_equippedItems!.hat.value != null) {
@@ -182,11 +187,10 @@ class _HomeScreenState extends State<HomeScreen>
           equippedResponse['shirt_id'] as int?,
         );
 
-        _equippedItems =
-            EquippedItems()
-              ..hat.value = hat
-              ..glasses.value = glasses
-              ..shirt.value = shirt;
+        _equippedItems ??= EquippedItems();
+        _equippedItems!.hat.value = hat;
+        _equippedItems!.glasses.value = glasses;
+        _equippedItems!.shirt.value = shirt;
 
         await isarService.updateEquippedItems(_userProfile!, _equippedItems!);
         print("Refreshed equipped items from Supabase");
@@ -228,16 +232,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _navigateTo(Widget screen) async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => screen),
     );
-
-    if (result == true || screen is ShopScreen) {
-      print("Refreshing data after navigation");
-      await _fetchUserData();
-      setState(() {});
-    }
+    // Refresh data when coming back from any screen that might change it
+    print("Refreshing data after navigation");
+    await _fetchUserData();
   }
 
   Future<void> _navigateToShop() async {
@@ -250,7 +251,6 @@ class _HomeScreenState extends State<HomeScreen>
     final userId = supabase.auth.currentUser?.id;
     if (userId != null) {
       await _loadLocalData(userId);
-
       if (mounted) {
         setState(() {});
       }
@@ -263,8 +263,37 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
+  /// Helper function untuk membangun item yang dipakai secara dinamis.
+  Widget _buildEquippedItem(ShopItem? item, double characterSize) {
+    if (item == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Ambil konfigurasi dari map, atau gunakan default jika tidak ada.
+    final fit = accessoryFits[item.assetPath] ?? const AccessoryFit();
+
+    // Kalkulasi ukuran dan posisi secara dinamis.
+    final double itemWidth = characterSize * fit.widthFactor;
+    final double itemHeight = characterSize * fit.heightFactor;
+    final double topPosition = characterSize * fit.topOffsetFactor;
+    final double leftPosition =
+        (characterSize / 2) -
+        (itemWidth / 2) +
+        (characterSize * fit.horizontalOffsetFactor);
+
+    return Positioned(
+      top: topPosition,
+      left: leftPosition,
+      width: itemWidth,
+      height: itemHeight,
+      child: Image.asset(item.assetPath, fit: BoxFit.contain),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final characterSize = 90.w;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -328,62 +357,40 @@ class _HomeScreenState extends State<HomeScreen>
                                 },
                                 child: GestureDetector(
                                   onTap: _onEggTapped,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Image.asset(
-                                        _isHatched
-                                            ? 'assets/images/ronald-child.png'
-                                            : 'assets/images/ronald-egg.png',
-                                        width: 500,
-                                        height: 500,
-                                      ),
-
-                                      if (_isHatched &&
-                                          _equippedItems?.hat.value != null)
-                                        Positioned(
-                                          top: -70,
-                                          child: Image.asset(
-                                            _equippedItems!
-                                                .hat
-                                                .value!
-                                                .assetPath,
-                                            width: 300,
-                                            height: 300,
-                                            fit: BoxFit.contain,
-                                          ),
+                                  child: SizedBox(
+                                    width: characterSize,
+                                    height: characterSize,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        // Gambar karakter dasar atau telur
+                                        Image.asset(
+                                          _isHatched
+                                              ? 'assets/images/ronald-child.png'
+                                              : 'assets/images/ronald-egg.png',
+                                          width: characterSize,
+                                          height: characterSize,
+                                          fit: BoxFit.contain,
                                         ),
 
-                                      if (_isHatched &&
-                                          _equippedItems?.glasses.value != null)
-                                        Positioned(
-                                          top: 60,
-                                          child: Image.asset(
-                                            _equippedItems!
-                                                .glasses
-                                                .value!
-                                                .assetPath,
-                                            width: 250,
-                                            height: 250,
-                                            fit: BoxFit.contain,
+                                        // Gunakan helper function untuk merender semua aksesori
+                                        if (_isHatched)
+                                          _buildEquippedItem(
+                                            _equippedItems?.hat.value,
+                                            characterSize,
                                           ),
-                                        ),
-
-                                      if (_isHatched &&
-                                          _equippedItems?.shirt.value != null)
-                                        Positioned(
-                                          top: 245,
-                                          child: Image.asset(
-                                            _equippedItems!
-                                                .shirt
-                                                .value!
-                                                .assetPath,
-                                            width: 300,
-                                            height: 200,
-                                            fit: BoxFit.contain,
+                                        if (_isHatched)
+                                          _buildEquippedItem(
+                                            _equippedItems?.glasses.value,
+                                            characterSize,
                                           ),
-                                        ),
-                                    ],
+                                        if (_isHatched)
+                                          _buildEquippedItem(
+                                            _equippedItems?.shirt.value,
+                                            characterSize,
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

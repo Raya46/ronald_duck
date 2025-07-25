@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ronald_duck/config/accessory_config.dart';
 import 'package:ronald_duck/models/game_schema.dart';
 import 'package:ronald_duck/service/game_service.dart';
 import 'package:ronald_duck/widgets/shop_grid_item.dart';
 import 'package:ronald_duck/widgets/shop_tab_item.dart';
+import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -29,6 +31,9 @@ class _ShopScreenState extends State<ShopScreen> {
     super.initState();
     _fetchData();
   }
+
+  // --- SEMUA METODE LOGIKA DATA (fetch, load, sync, purchase, equip) TETAP SAMA ---
+  // ... (Tidak perlu mengubah _fetchData, _loadLocalData, _syncWithSupabase, dll)
 
   Future<void> _fetchData() async {
     final userId = supabase.auth.currentUser?.id;
@@ -283,9 +288,37 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
+  /// Helper function untuk membangun item yang dipakai secara dinamis.
+  Widget _buildEquippedItem(ShopItem? item, double characterSize) {
+    if (item == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Ambil konfigurasi dari map, atau gunakan default jika tidak ada.
+    final fit = accessoryFits[item.assetPath] ?? const AccessoryFit();
+
+    // Kalkulasi ukuran dan posisi secara dinamis.
+    final double itemWidth = characterSize * fit.widthFactor;
+    final double itemHeight = characterSize * fit.heightFactor;
+    final double topPosition = characterSize * fit.topOffsetFactor;
+    final double leftPosition =
+        (characterSize / 2) -
+        (itemWidth / 2) +
+        (characterSize * fit.horizontalOffsetFactor);
+
+    return Positioned(
+      top: topPosition,
+      left: leftPosition,
+      width: itemWidth,
+      height: itemHeight,
+      child: Image.asset(item.assetPath, fit: BoxFit.contain),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final characterSize = MediaQuery.of(context).size.width * 0.5;
+    // Gunakan Sizer untuk membuat ukuran karakter responsif.
+    final characterSize = 50.w; // 50% dari lebar layar
 
     return Scaffold(
       body: Stack(
@@ -347,6 +380,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
+                          // Gambar karakter dasar
                           Image.asset(
                             'assets/images/ronald-child.png',
                             width: characterSize,
@@ -354,41 +388,20 @@ class _ShopScreenState extends State<ShopScreen> {
                             fit: BoxFit.contain,
                           ),
 
-                          if (_equippedItems?.hat.value != null)
-                            Positioned(
-                              top: characterSize * -0.4,
-                              child: Image.asset(
-                                _equippedItems!.hat.value!.assetPath,
-                                width: characterSize,
-                                height: characterSize,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-
-                          if (_equippedItems?.glasses.value != null)
-                            Positioned(
-                              top: characterSize * -0.15,
-                              child: Image.asset(
-                                _equippedItems!.glasses.value!.assetPath,
-                                width: characterSize * 0.5,
-                                height: characterSize,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-
-                          if (_equippedItems?.shirt.value != null)
-                            Positioned(
-                              top: characterSize * 0.42,
-                              child: Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Image.asset(
-                                  _equippedItems!.shirt.value!.assetPath,
-                                  width: characterSize * 0.71,
-                                  height: characterSize * 0.55,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
+                          // --- PERUBAHAN UTAMA ---
+                          // Gunakan helper function untuk merender semua aksesori
+                          _buildEquippedItem(
+                            _equippedItems?.hat.value,
+                            characterSize,
+                          ),
+                          _buildEquippedItem(
+                            _equippedItems?.glasses.value,
+                            characterSize,
+                          ),
+                          _buildEquippedItem(
+                            _equippedItems?.shirt.value,
+                            characterSize,
+                          ),
                         ],
                       ),
                     ),

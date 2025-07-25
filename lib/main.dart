@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ronald_duck/screens/splash_screen.dart';
 import 'package:ronald_duck/service/game_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sizer/sizer.dart';
 
 final isarService = IsarService();
 
@@ -28,6 +29,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(title: 'Ronald Duck', home: SplashScreen());
+    return Sizer(
+      builder: (context, orientation, deviceType) {
+        return MaterialApp(
+          title: 'Ronald Duck',
+          home: const SplashScreen(),
+          debugShowCheckedModeBanner: false,
+        );
+      },
+    );
   }
 }
