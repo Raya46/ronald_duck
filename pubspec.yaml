@@ -2,7 +2,7 @@ name: ronald_duck
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -36,11 +36,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   flame: ^1.30.0
   just_audio: ^0.10.4
-  audioplayers: ^5.2.1  
-  isar: 
+  audioplayers: ^5.2.1
+  isar:
     version: 3.1.8
     hosted: https://pub.isar-community.dev/
-  isar_flutter_libs: 
+  isar_flutter_libs:
     version: 3.1.8
     hosted: https://pub.isar-community.dev/
   confetti: ^0.8.0
@@ -68,18 +68,21 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  isar_generator: 
+  isar_generator:
     version: 3.1.8
     hosted: https://pub.isar-community.dev/
   build_runner: any
 
-
 # For information on the generic Dart part of this file, see the
+flutter_launcher_icons:
+android: true
+ios: true
+image_path: "assets/images/ronald-splash.png"
+
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
