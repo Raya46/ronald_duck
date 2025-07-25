@@ -1,0 +1,20 @@
+dev_dependencies:
+  flutter_launcher_icons: "^0.14.3"
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/ronald-splash.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/images/ronald-splash.png"
+    background_color: "#hexcode"
+    theme_color: "#hexcode"
+  windows:
+    generate: true
+    image_path: "assets/images/ronald-splash.png"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "assets/images/ronald-splash.png"
