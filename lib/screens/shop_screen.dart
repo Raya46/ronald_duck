@@ -17,7 +17,7 @@ class _ShopScreenState extends State<ShopScreen> {
   final IsarService isarService = IsarService();
   final supabase = Supabase.instance.client;
 
-  int _selectedIndex = 0; // 0: hat, 1: glasses, 2: shirt
+  int _selectedIndex = 0;
   UserProfile? _userProfile;
   List<ShopItem> _shopItems = [];
   Set<int> _inventoryItemIds = {};
@@ -37,11 +37,9 @@ class _ShopScreenState extends State<ShopScreen> {
       return;
     }
 
-    // 1. Ambil data dari Isar (lokal) dan perbarui UI
     await _loadLocalData(userId);
     if (mounted) setState(() => _isLoading = false);
 
-    // 2. Sinkronisasi dengan Supabase di latar belakang
     _syncWithSupabase(userId);
   }
 
@@ -56,11 +54,9 @@ class _ShopScreenState extends State<ShopScreen> {
               .where((id) => id != -1)
               .toSet();
 
-      // FIXED: Pastikan equipped items dimuat dengan benar
       await _userProfile!.equippedItems.load();
       _equippedItems = _userProfile!.equippedItems.value;
 
-      // Jika belum ada equipped items, buat yang baru
       if (_equippedItems == null) {
         _equippedItems = EquippedItems();
         await isarService.updateEquippedItems(_userProfile!, _equippedItems!);
@@ -106,7 +102,6 @@ class _ShopScreenState extends State<ShopScreen> {
       if (_userProfile != null) {
         await isarService.syncUserInventory(_userProfile!, fetchedInventoryIds);
 
-        // 2. Sinkronkan item yang dipakai
         if (equippedResponse != null) {
           final hat = await isarService.getShopItemBySupabaseId(
             equippedResponse['hat_id'] as int?,
@@ -195,10 +190,10 @@ class _ShopScreenState extends State<ShopScreen> {
     switch (item.type) {
       case ItemType.hat:
         if (_equippedItems!.hat.value?.supabaseItemId == item.supabaseItemId) {
-          _equippedItems!.hat.value = null; // Unequip
+          _equippedItems!.hat.value = null;
           statusMessage = '${item.name} telah dilepas!';
         } else {
-          _equippedItems!.hat.value = item; // Equip
+          _equippedItems!.hat.value = item;
           statusMessage = '${item.name} telah dipakai!';
         }
         break;
@@ -224,25 +219,42 @@ class _ShopScreenState extends State<ShopScreen> {
         break;
     }
 
-    // FIXED: Pastikan perubahan tersimpan dengan benar
     try {
       await isarService.updateEquippedItems(_userProfile!, _equippedItems!);
 
-      // Update UI terlebih dahulu
-      setState(() {});
-
-      // Sync ke Supabase
       final updates = <String, dynamic>{
         'user_id': _userProfile!.supabaseUserId,
         'hat_id': _equippedItems!.hat.value?.supabaseItemId,
         'glasses_id': _equippedItems!.glasses.value?.supabaseItemId,
         'shirt_id': _equippedItems!.shirt.value?.supabaseItemId,
       };
-      await supabase.from('equipped_items').upsert(updates);
 
-      print("Equipment saved successfully: $updates"); // Debug log
+      final response =
+          await supabase.from('equipped_items').upsert(updates).select();
+
+      if (response.isNotEmpty) {
+        print("Equipment saved successfully: $updates");
+      } else {
+        print("Warning: Equipment save response was empty");
+      }
+
+      setState(() {});
     } catch (e) {
       print("Error syncing equipped item: $e");
+
+      try {
+        await Future.delayed(const Duration(milliseconds: 1000));
+        final retryUpdates = <String, dynamic>{
+          'user_id': _userProfile!.supabaseUserId,
+          'hat_id': _equippedItems!.hat.value?.supabaseItemId,
+          'glasses_id': _equippedItems!.glasses.value?.supabaseItemId,
+          'shirt_id': _equippedItems!.shirt.value?.supabaseItemId,
+        };
+        await supabase.from('equipped_items').upsert(retryUpdates);
+        print("Equipment saved successfully on retry: $retryUpdates");
+      } catch (retryError) {
+        print("Error on retry sync: $retryError");
+      }
     }
 
     if (mounted) {
@@ -298,7 +310,6 @@ class _ShopScreenState extends State<ShopScreen> {
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back),
                           onPressed: () {
-                            // FIXED: Return true to indicate data has changed
                             Navigator.pop(context, true);
                           },
                         ),
@@ -336,7 +347,6 @@ class _ShopScreenState extends State<ShopScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // Base character
                           Image.asset(
                             'assets/images/ronald-child.png',
                             width: characterSize,
@@ -344,10 +354,9 @@ class _ShopScreenState extends State<ShopScreen> {
                             fit: BoxFit.contain,
                           ),
 
-                          // Equipped Hat
                           if (_equippedItems?.hat.value != null)
                             Positioned(
-                              top: characterSize * -0.4, // Move hat up
+                              top: characterSize * -0.4,
                               child: Image.asset(
                                 _equippedItems!.hat.value!.assetPath,
                                 width: characterSize,
@@ -356,12 +365,9 @@ class _ShopScreenState extends State<ShopScreen> {
                               ),
                             ),
 
-                          // Equipped Glasses
                           if (_equippedItems?.glasses.value != null)
                             Positioned(
-                              top:
-                                  characterSize *
-                                  -0.15, // Position glasses below hat
+                              top: characterSize * -0.15,
                               child: Image.asset(
                                 _equippedItems!.glasses.value!.assetPath,
                                 width: characterSize * 0.5,
@@ -370,17 +376,14 @@ class _ShopScreenState extends State<ShopScreen> {
                               ),
                             ),
 
-                          // Equipped Shirt
                           if (_equippedItems?.shirt.value != null)
                             Positioned(
-                              top: characterSize * 0.42, // Move shirt down
+                              top: characterSize * 0.42,
                               child: Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: Image.asset(
                                   _equippedItems!.shirt.value!.assetPath,
-                                  width:
-                                      characterSize *
-                                      0.71, // Adjust size if needed
+                                  width: characterSize * 0.71,
                                   height: characterSize * 0.55,
                                   fit: BoxFit.contain,
                                 ),

@@ -23,7 +23,6 @@ class VoiceScreen extends StatefulWidget {
 
 class _VoiceScreenState extends State<VoiceScreen>
     with TickerProviderStateMixin {
-  // Menggunakan TickerProviderStateMixin untuk beberapa controller
   final IsarService isarService = IsarService();
   final supabase = Supabase.instance.client;
 
@@ -34,8 +33,7 @@ class _VoiceScreenState extends State<VoiceScreen>
   bool _isSpeaking = false;
 
   late AnimationController _waveAnimationController;
-  late AnimationController
-  _speakingAnimationController; // Controller baru untuk animasi berbicara
+  late AnimationController _speakingAnimationController;
   late Animation<double> _speakingAnimation;
 
   final SpeechToText _speechToText = SpeechToText();
@@ -102,7 +100,7 @@ class _VoiceScreenState extends State<VoiceScreen>
   @override
   void dispose() {
     _waveAnimationController.dispose();
-    _speakingAnimationController.dispose(); // Dispose controller baru
+    _speakingAnimationController.dispose();
     _speechToText.stop();
     _subtitleTimer?.cancel();
     _audioPlayer.dispose();
@@ -287,9 +285,7 @@ class _VoiceScreenState extends State<VoiceScreen>
           _isSpeaking = true;
         });
 
-        _speakingAnimationController.repeat(
-          reverse: true,
-        ); // Mulai animasi berbicara
+        _speakingAnimationController.repeat(reverse: true);
         await _audioPlayer.play(DeviceFileSource(filePath));
         _startSubtitleTimer(text);
       } else {
@@ -352,7 +348,7 @@ class _VoiceScreenState extends State<VoiceScreen>
           _isSpeaking = false;
           _subtitleText = '';
         });
-        _speakingAnimationController.stop(); // Hentikan animasi berbicara
+        _speakingAnimationController.stop();
         _speakingAnimationController.reset();
       }
     });
@@ -465,7 +461,7 @@ class _VoiceScreenState extends State<VoiceScreen>
                                     _getCurrentRonaldImage(),
                                     key: ValueKey<String>(
                                       _getCurrentRonaldImage(),
-                                    ), // Penting untuk transisi
+                                    ),
                                     width: 500,
                                     height: 500,
                                   ),
@@ -545,7 +541,7 @@ class _VoiceScreenState extends State<VoiceScreen>
           children: [
             Icon(icon, color: color, size: 18),
             const SizedBox(width: 8),
-            AnimatedCount(count: value), // Menggunakan widget animasi
+            AnimatedCount(count: value),
           ],
         ),
       ),
@@ -553,7 +549,6 @@ class _VoiceScreenState extends State<VoiceScreen>
   }
 }
 
-// WIDGET BARU UNTUK ANIMASI ANGKA
 class AnimatedCount extends StatelessWidget {
   final int count;
   const AnimatedCount({super.key, required this.count});

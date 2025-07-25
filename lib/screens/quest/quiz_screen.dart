@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class Question {
   final String text;
   final List<String> options;
-  final String correctAnswer; // 'A', 'B', 'C', or 'D'
+  final String correctAnswer;
   final QuestTopic topic;
   final String hint;
   final String image;
@@ -41,7 +41,6 @@ class _QuizScreenState extends State<QuizScreen> {
   String? _selectedOption;
   int _currentQuestionIndex = 0;
 
-  // Daftar soal, akan diacak setiap kali kuis dimulai
   final List<Question> _questions = [
     Question(
       text:
@@ -84,7 +83,6 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> _startNewQuest() async {
     setState(() => _isLoading = true);
 
-    // Acak urutan soal untuk setiap sesi baru
     _questions.shuffle();
 
     final userId = supabase.auth.currentUser?.id;
@@ -454,8 +452,8 @@ class _QuizScreenState extends State<QuizScreen> {
                         children: [
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.of(context).pop(); // Tutup modal
-                              _startNewQuest(); // Mulai lagi
+                              Navigator.of(context).pop();
+                              _startNewQuest();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF78B96A),
@@ -484,7 +482,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     else
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).pop(); // Tutup modal
+                          Navigator.of(context).pop();
                           if (isCorrect) {
                             _nextQuestion();
                           } else {

@@ -6,14 +6,14 @@ class ResultChoiceScreen extends StatelessWidget {
   final String title;
   final String iconPath;
   final String bonusText;
-  final int rewardCoins; // Parameter ini tetap ada
+  final int rewardCoins;
 
   const ResultChoiceScreen({
     super.key,
     required this.title,
     required this.iconPath,
     required this.bonusText,
-    required this.rewardCoins, // Wajib diisi
+    required this.rewardCoins,
   });
 
   @override
@@ -21,7 +21,6 @@ class ResultChoiceScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Lapis 1: Background Warna dan Pola
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
@@ -34,24 +33,22 @@ class ResultChoiceScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Lapis 2: Konten Utama (Efek Spotlight dihapus)
+
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Ikon di atas kartu
                     Image.asset(iconPath, width: 120),
                     const SizedBox(height: 16),
-                    // Kartu Utama
+
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Stack(
                         clipBehavior: Clip.none,
                         alignment: Alignment.topCenter,
                         children: [
-                          // Body Kartu
                           Container(
                             margin: const EdgeInsets.only(top: 28),
                             padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
@@ -88,7 +85,7 @@ class ResultChoiceScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      '$rewardCoins Koin', // Menggunakan nilai dinamis
+                                      '$rewardCoins Koin',
                                       style: GoogleFonts.poppins(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
@@ -120,7 +117,6 @@ class ResultChoiceScreen extends StatelessWidget {
                                 const SizedBox(height: 20),
                                 ElevatedButton(
                                   onPressed: () {
-                                    // Mengganti tumpukan halaman dengan HomeScreen
                                     Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(
@@ -144,7 +140,7 @@ class ResultChoiceScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          // Header "YEAY!!"
+
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 40,
@@ -176,5 +172,3 @@ class ResultChoiceScreen extends StatelessWidget {
     );
   }
 }
-
-// Class TopSpotlightPainter dihapus dari file ini

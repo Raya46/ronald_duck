@@ -56,7 +56,6 @@ class _HomeScreenState extends State<HomeScreen>
 
     var userProfile = await isarService.getUserProfile(userId);
 
-    // Jika tidak ada di Isar (kasus setelah login baru), ambil semua dari Supabase
     if (userProfile == null) {
       try {
         final results = await Future.wait<dynamic>([
@@ -98,12 +97,10 @@ class _HomeScreenState extends State<HomeScreen>
         );
         await isarService.saveUserProfile(userProfile);
 
-        // Sinkronkan inventory
         final inventoryIds =
             inventoryResponse.map((inv) => inv['item_id'] as int).toSet();
         await isarService.syncUserInventory(userProfile, inventoryIds);
 
-        // Sinkronkan item yang dipakai
         if (equippedResponse != null) {
           final hat = await isarService.getShopItemBySupabaseId(
             equippedResponse['hat_id'] as int?,
@@ -128,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen>
       }
     }
 
-    // Muat data terbaru dari Isar, termasuk relasi
     await _loadLocalData(userId);
 
     if (mounted) {
@@ -141,14 +137,62 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _loadLocalData(String userId) async {
     _userProfile = await isarService.getUserProfile(userId);
     if (_userProfile != null) {
-      // FIXED: Pastikan equipped items dimuat dengan benar setiap kali
       await _userProfile!.equippedItems.load();
       _equippedItems = _userProfile!.equippedItems.value;
+
+      if (_equippedItems == null) {
+        await _refreshEquippedItemsFromSupabase(userId);
+      } else {
+        if (_equippedItems!.hat.value != null) {
+          await _equippedItems!.hat.load();
+        }
+        if (_equippedItems!.glasses.value != null) {
+          await _equippedItems!.glasses.load();
+        }
+        if (_equippedItems!.shirt.value != null) {
+          await _equippedItems!.shirt.load();
+        }
+      }
+
       _isHatched = _userProfile!.isHatched;
 
       print(
         "Loaded equipped items: Hat: ${_equippedItems?.hat.value?.name}, Glasses: ${_equippedItems?.glasses.value?.name}, Shirt: ${_equippedItems?.shirt.value?.name}",
-      ); // Debug log
+      );
+    }
+  }
+
+  Future<void> _refreshEquippedItemsFromSupabase(String userId) async {
+    try {
+      final equippedResponse =
+          await supabase
+              .from('equipped_items')
+              .select()
+              .eq('user_id', userId)
+              .maybeSingle();
+
+      if (equippedResponse != null && _userProfile != null) {
+        final hat = await isarService.getShopItemBySupabaseId(
+          equippedResponse['hat_id'] as int?,
+        );
+        final glasses = await isarService.getShopItemBySupabaseId(
+          equippedResponse['glasses_id'] as int?,
+        );
+        final shirt = await isarService.getShopItemBySupabaseId(
+          equippedResponse['shirt_id'] as int?,
+        );
+
+        _equippedItems =
+            EquippedItems()
+              ..hat.value = hat
+              ..glasses.value = glasses
+              ..shirt.value = shirt;
+
+        await isarService.updateEquippedItems(_userProfile!, _equippedItems!);
+        print("Refreshed equipped items from Supabase");
+      }
+    } catch (e) {
+      print("Error refreshing equipped items from Supabase: $e");
     }
   }
 
@@ -183,34 +227,33 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // FIXED: Improved navigation handling with data refresh
   Future<void> _navigateTo(Widget screen) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => screen),
     );
 
-    // If coming back from shop screen or any screen that might change data
     if (result == true || screen is ShopScreen) {
-      print("Refreshing data after navigation"); // Debug log
+      print("Refreshing data after navigation");
       await _fetchUserData();
-      setState(() {}); // Force rebuild UI
+      setState(() {});
     }
   }
 
-  // FIXED: Alternative method for shop navigation with guaranteed refresh
   Future<void> _navigateToShop() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const ShopScreen()),
     );
 
-    // Always refresh data when coming back from shop
-    print("Refreshing data after shop visit"); // Debug log
+    print("Refreshing data from local DB after shop visit");
     final userId = supabase.auth.currentUser?.id;
     if (userId != null) {
       await _loadLocalData(userId);
-      setState(() {});
+
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -288,7 +331,6 @@ class _HomeScreenState extends State<HomeScreen>
                                   child: Stack(
                                     alignment: Alignment.center,
                                     children: [
-                                      // Base character
                                       Image.asset(
                                         _isHatched
                                             ? 'assets/images/ronald-child.png'
@@ -297,18 +339,17 @@ class _HomeScreenState extends State<HomeScreen>
                                         height: 500,
                                       ),
 
-                                      // FIXED: Improved equipped items rendering with better positioning
                                       if (_isHatched &&
                                           _equippedItems?.hat.value != null)
                                         Positioned(
-                                          top: -200, // Adjust hat position
+                                          top: -70,
                                           child: Image.asset(
                                             _equippedItems!
                                                 .hat
                                                 .value!
                                                 .assetPath,
-                                            width: 500,
-                                            height: 500,
+                                            width: 300,
+                                            height: 300,
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -316,7 +357,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       if (_isHatched &&
                                           _equippedItems?.glasses.value != null)
                                         Positioned(
-                                          top: -75, // Adjust glasses position
+                                          top: 60,
                                           child: Image.asset(
                                             _equippedItems!
                                                 .glasses
@@ -331,14 +372,14 @@ class _HomeScreenState extends State<HomeScreen>
                                       if (_isHatched &&
                                           _equippedItems?.shirt.value != null)
                                         Positioned(
-                                          top: 210, // Adjust shirt position
+                                          top: 245,
                                           child: Image.asset(
                                             _equippedItems!
                                                 .shirt
                                                 .value!
                                                 .assetPath,
-                                            width: 355,
-                                            height: 275,
+                                            width: 300,
+                                            height: 200,
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -354,8 +395,7 @@ class _HomeScreenState extends State<HomeScreen>
                               _buildBottomCard(
                                 'assets/images/shop.png',
                                 'Shop',
-                                () =>
-                                    _navigateToShop(), // FIXED: Use dedicated shop navigation
+                                () => _navigateToShop(),
                               ),
                               _buildBottomCard(
                                 'assets/images/voice.png',

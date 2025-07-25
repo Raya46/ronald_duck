@@ -26,7 +26,6 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
 
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
-      // Handle error, user not logged in
       setState(() => _isLoading = false);
       return;
     }
@@ -63,11 +62,9 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
               : 'Yah, kamu rugi $coinChange koin. Coba lagi lain kali!';
     }
 
-    // Simpan ke Isar
     await isarService.saveUserProfile(userProfile);
     await isarService.addFinancialChoice(userProfile, choiceType, coinChange);
 
-    // Update ke Supabase di latar belakang
     _syncToSupabase(userProfile, choiceType, coinChange);
 
     if (mounted) {
@@ -79,7 +76,7 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
                 title: resultTitle,
                 iconPath: resultIcon,
                 bonusText: resultBonusText,
-                rewardCoins: widget.rewardCoins, // Teruskan koin hadiah utama
+                rewardCoins: widget.rewardCoins,
               ),
         ),
       );
@@ -92,21 +89,18 @@ class _RewardChoiceScreenState extends State<RewardChoiceScreen> {
     int coinChange,
   ) async {
     try {
-      // Update total koin
       await supabase
           .from('user_progress')
           .update({'coins': profile.coins})
           .eq('user_id', profile.supabaseUserId);
 
-      // Catat pilihan finansial
       await supabase.from('financial_choices').insert({
         'user_id': profile.supabaseUserId,
-        'choice_type': choice.name, // 'tabung' or 'investasi'
+        'choice_type': choice.name,
         'coin_change': coinChange,
       });
     } catch (e) {
       print("Error syncing choice to Supabase: $e");
-      // Data sudah aman di Isar, bisa ditambahkan logika retry nanti
     }
   }
 

@@ -21,14 +21,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   final supabase = Supabase.instance.client;
 
   bool _isLoading = true;
-  String _insightText = 'Memuat insight dari AI...';
+  String _insightText = 'Memuat insight';
 
-  // State untuk data dashboard
   UserProfile? _userProfile;
   List<QuestHistory> _questHistory = [];
 
-  // Statistik yang dihitung
-  double _waktuBelajarJam = 0.0; // Contoh, perlu logika tracking waktu
+  double _waktuBelajarJam = 0.0;
   int _gameSelesaiBenar = 0;
 
   int _menabungPercent = 0;
@@ -49,24 +47,20 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       return;
     }
 
-    // 1. Ambil data dari Isar (cache)
     _userProfile = await isarService.getUserProfile(userId);
     if (_userProfile != null) {
       _questHistory = await _userProfile!.questHistory.filter().findAll();
       _calculateStatistics();
-      setState(() => _isLoading = false); // Tampilkan data cache
+      setState(() => _isLoading = false);
     }
 
-    // 2. Sinkronisasi dengan Supabase
     try {
-      final profileFuture = isarService.getUserProfile(
-        userId,
-      ); // Re-fetch for latest local data
+      final profileFuture = isarService.getUserProfile(userId);
       final historyFuture = supabase
           .from('quest_history')
           .select()
           .eq('user_id', userId)
-          .then((data) => data); // Ensure it's a Future<dynamic>
+          .then((data) => data);
 
       final results = await Future.wait<dynamic>([
         profileFuture,
@@ -89,7 +83,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
       if (_userProfile != null) {
         _calculateStatistics();
-        _generateInsight(); // Hasilkan insight setelah data terbaru didapat
+        _generateInsight();
         setState(() {});
       }
     } catch (e) {
@@ -357,7 +351,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 }
 
-// WIDGET UNTUK 3 KARTU INFO DI ATAS
 class InfoCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -409,7 +402,6 @@ class InfoCard extends StatelessWidget {
   }
 }
 
-// WIDGET UNTUK KARTU PROGRESS DENGAN GRAFIK LINGKARAN
 class ProgressCard extends StatelessWidget {
   final String title;
   final int percentage;
@@ -487,7 +479,6 @@ class ProgressCard extends StatelessWidget {
   }
 }
 
-// PAINTER UNTUK MENGGAMBAR GRAFIK LINGKARAN
 class CircularProgressPainter extends CustomPainter {
   final int percentage;
   final Color progressColor;

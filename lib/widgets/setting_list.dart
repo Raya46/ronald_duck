@@ -27,16 +27,13 @@ class _SettingScreenState extends State<SettingScreen> {
     });
 
     try {
-      // 1. Logout dari Supabase
       await Supabase.instance.client.auth.signOut();
 
-      // 2. Hapus semua data dari database lokal Isar
       final isar = await isarService.db;
       await isar.writeTxn(() async {
         await isar.clear();
       });
 
-      // 3. Navigasi ke LoginScreen dan hapus semua halaman sebelumnya
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -166,14 +163,14 @@ class SettingList extends StatelessWidget {
   final String title;
   final IconData? icon;
   final VoidCallback? onPress;
-  final bool isLoading; // Tambahkan parameter isLoading
+  final bool isLoading;
 
   const SettingList({
     super.key,
     required this.title,
     this.icon,
     this.onPress,
-    this.isLoading = false, // Default value adalah false
+    this.isLoading = false,
   });
 
   @override
@@ -181,7 +178,7 @@ class SettingList extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: InkWell(
-        onTap: isLoading ? null : onPress, // Nonaktifkan tap saat loading
+        onTap: isLoading ? null : onPress,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -213,7 +210,7 @@ class SettingList extends StatelessWidget {
                   ),
                 ],
               ),
-              // Tampilkan loading indicator atau ikon panah
+
               if (isLoading)
                 const SizedBox(
                   width: 24,

@@ -7,8 +7,9 @@ import 'package:flame/game.dart';
 import 'package:flame/palette.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flame/effects.dart';
+import 'package:ronald_duck/service/game_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Asset paths - make sure these match your pubspec.yaml
 const String ronaldChild = 'ronald-child.png';
 const String ronaldHello = 'ronald-hello.png';
 const String ronaldWrong = 'ronald-wrong.png';
@@ -18,12 +19,7 @@ const String bombAsset = 'bom.png';
 const String controllerAsset = 'controller.png';
 const String cloudAsset = 'cloud.png';
 
-// Enum to represent the types of falling objects
 enum ObjectType { coin, book, bomb, controller }
-
-// ##################################################################
-// #                 FLUTTER WIDGET (UI LAYER)                      #
-// ##################################################################
 
 class GameHopScreen extends StatefulWidget {
   const GameHopScreen({super.key});
@@ -34,12 +30,47 @@ class GameHopScreen extends StatefulWidget {
 
 class _GameHopScreenState extends State<GameHopScreen> {
   late final KwakKwakGame _game;
+  final IsarService isarService = IsarService();
+  final supabase = Supabase.instance.client;
+
+  Future<void> _saveGameResult(int finalScore) async {
+    if (finalScore <= 0) return;
+
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      print("Error: User not found, cannot save score.");
+      return;
+    }
+
+    try {
+      print("Saving score: $finalScore for user: $userId");
+
+      final userProfile = await isarService.getUserProfile(userId);
+      if (userProfile != null) {
+        userProfile.coins += finalScore;
+
+        await isarService.saveUserProfile(userProfile);
+        print(
+          "Coins successfully saved to local DB. New total: ${userProfile.coins}",
+        );
+
+        await supabase
+            .from('user_progress')
+            .update({'coins': userProfile.coins})
+            .eq('user_id', userId);
+
+        print("Coins successfully synced to Supabase.");
+      }
+    } catch (e) {
+      print("An error occurred while saving score: $e");
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _game = KwakKwakGame();
-    // Listen for game over to show the dialog
+    _game = KwakKwakGame(onGameOverCallback: _saveGameResult);
+
     _game.isGameOver.addListener(_onGameOver);
   }
 
@@ -102,8 +133,8 @@ class _GameHopScreenState extends State<GameHopScreen> {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Go back from game screen
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
                 },
                 child: Text(
                   'Keluar',
@@ -121,7 +152,6 @@ class _GameHopScreenState extends State<GameHopScreen> {
   }
 
   void _showSettingsModal() {
-    // Pause the game when opening settings
     _game.pauseEngine();
 
     showDialog(
@@ -138,13 +168,12 @@ class _GameHopScreenState extends State<GameHopScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header with back button
                 Row(
                   children: [
                     IconButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); // Close modal
-                        _game.resumeEngine(); // Resume game
+                        Navigator.of(context).pop();
+                        _game.resumeEngine();
                       },
                       icon: const Icon(
                         Icons.arrow_back,
@@ -162,19 +191,16 @@ class _GameHopScreenState extends State<GameHopScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 44), // Balance the back button
+                    const SizedBox(width: 44),
                   ],
                 ),
                 const SizedBox(height: 20),
 
-                // Settings content
                 _buildSettingItem(
                   icon: Icons.volume_up,
                   title: 'Suara',
                   subtitle: 'Atur volume game',
-                  onTap: () {
-                    // TODO: Implement sound settings
-                  },
+                  onTap: () {},
                 ),
                 const SizedBox(height: 16),
 
@@ -182,9 +208,7 @@ class _GameHopScreenState extends State<GameHopScreen> {
                   icon: Icons.info_outline,
                   title: 'Tentang Game',
                   subtitle: 'Informasi game',
-                  onTap: () {
-                    // TODO: Implement about game
-                  },
+                  onTap: () {},
                 ),
                 const SizedBox(height: 16),
 
@@ -198,7 +222,6 @@ class _GameHopScreenState extends State<GameHopScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Exit to main menu button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -210,8 +233,8 @@ class _GameHopScreenState extends State<GameHopScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onPressed: () {
-                      Navigator.of(context).pop(); // Close settings modal
-                      Navigator.of(context).pop(); // Go back from game screen
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
                     },
                     child: Text(
                       'Kembali ke Menu Utama',
@@ -393,33 +416,30 @@ class _GameHopScreenState extends State<GameHopScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // The game widget
           GameWidget(game: _game),
-          // The UI overlay
+
           _buildUiOverlay(),
-          // The game controls
+
           _buildGameControls(),
         ],
       ),
     );
   }
 
-  /// Builds the UI that sits on top of the game (score, lives, buttons)
   Widget _buildUiOverlay() {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // Menu Button
             _buildIconButton(Icons.more_horiz, () {
               _showSettingsModal();
             }),
             const SizedBox(width: 8),
-            // Restart Button
+
             _buildIconButton(Icons.refresh, () => _game.restart()),
             const Spacer(),
-            // Lives Display
+
             ValueListenableBuilder<int>(
               valueListenable: _game.lives,
               builder: (context, lives, child) {
@@ -435,7 +455,7 @@ class _GameHopScreenState extends State<GameHopScreen> {
               },
             ),
             const SizedBox(width: 16),
-            // Score Display
+
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
@@ -472,7 +492,6 @@ class _GameHopScreenState extends State<GameHopScreen> {
     );
   }
 
-  /// Builds a single circular icon button for the UI overlay
   Widget _buildIconButton(IconData icon, VoidCallback onPressed) {
     return Material(
       color: Colors.white.withOpacity(0.8),
@@ -489,7 +508,6 @@ class _GameHopScreenState extends State<GameHopScreen> {
     );
   }
 
-  /// Builds the left and right movement controls
   Widget _buildGameControls() {
     return Align(
       alignment: Alignment.bottomCenter,
@@ -531,18 +549,15 @@ class _GameHopScreenState extends State<GameHopScreen> {
   }
 }
 
-// ##################################################################
-// #                   FLAME GAME (LOGIC LAYER)                     #
-// ##################################################################
-
 class KwakKwakGame extends FlameGame with HasCollisionDetection {
   late final Player player;
   final Random _random = Random();
 
-  // Game state notifiers for the UI to listen to
   final ValueNotifier<int> score = ValueNotifier(0);
   final ValueNotifier<int> lives = ValueNotifier(3);
   final ValueNotifier<bool> isGameOver = ValueNotifier(false);
+  final void Function(int score) onGameOverCallback;
+  KwakKwakGame({required this.onGameOverCallback});
 
   @override
   Color backgroundColor() => const Color(0xFF81D4FA);
@@ -551,10 +566,8 @@ class KwakKwakGame extends FlameGame with HasCollisionDetection {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // FIXED: Disable debug mode in production for better performance
     debugMode = false;
 
-    // Pre-load all images into the cache
     await images.loadAll([
       ronaldChild,
       ronaldHello,
@@ -566,12 +579,10 @@ class KwakKwakGame extends FlameGame with HasCollisionDetection {
       cloudAsset,
     ]);
 
-    // Add background and player
     add(Background());
     player = Player();
     add(player);
 
-    // Start spawning objects and clouds
     add(TimerComponent(period: 1.2, repeat: true, onTick: _spawnObject));
     add(TimerComponent(period: 5.0, repeat: true, onTick: _spawnCloud));
   }
@@ -599,12 +610,9 @@ class KwakKwakGame extends FlameGame with HasCollisionDetection {
     final oldScore = score.value;
     score.value = max(0, score.value - amount);
 
-    // FIXED: Logic untuk mengurangi lives berdasarkan skor negatif
-    // Periksa apakah skor melewati kelipatan -10
     final newNegativeAmount = max(0, -score.value);
     final oldNegativeAmount = max(0, -(oldScore - amount));
 
-    // Hitung berapa banyak kelipatan 10 yang terlewati
     final livesToLose = (newNegativeAmount ~/ 10) - (oldNegativeAmount ~/ 10);
 
     if (livesToLose > 0) {
@@ -634,18 +642,17 @@ class KwakKwakGame extends FlameGame with HasCollisionDetection {
   void handleGameOver() {
     if (!isGameOver.value) {
       isGameOver.value = true;
-      // Pause the engine to stop all components
+
       pauseEngine();
+      onGameOverCallback(score.value);
     }
   }
 
   void restart() {
-    // Reset game state
     score.value = 0;
     lives.value = 3;
     isGameOver.value = false;
 
-    // Remove all existing game components except Background and Player
     children.whereType<FallingObject>().toList().forEach(
       (obj) => obj.removeFromParent(),
     );
@@ -656,20 +663,13 @@ class KwakKwakGame extends FlameGame with HasCollisionDetection {
       (indicator) => indicator.removeFromParent(),
     );
 
-    // Reset player position and state
     player.position = Vector2(size.x / 2, size.y - 150);
     player.current = 'idle';
 
-    // Resume the engine
     resumeEngine();
   }
 }
 
-// ##################################################################
-// #                     GAME COMPONENTS                            #
-// ##################################################################
-
-/// Player Component
 class Player extends SpriteAnimationGroupComponent<String>
     with HasGameRef<KwakKwakGame>, CollisionCallbacks {
   final double _speed = 300.0;
@@ -693,8 +693,6 @@ class Player extends SpriteAnimationGroupComponent<String>
     };
     current = 'idle';
 
-    // FIXED: Menggunakan RectangleHitbox dengan ukuran yang lebih kecil dan konsisten
-    // untuk hitbox yang lebih akurat dan dapat diprediksi
     add(
       RectangleHitbox(
         size: Vector2(size.x * 0.6, size.y * 0.6),
@@ -727,12 +725,11 @@ class Player extends SpriteAnimationGroupComponent<String>
   }
 }
 
-/// Falling Object Component
 class FallingObject extends SpriteComponent
     with HasGameRef<KwakKwakGame>, CollisionCallbacks {
   final ObjectType type;
   final double _speed = 150.0;
-  bool _hasCollided = false; // FIXED: Mencegah collision berganda
+  bool _hasCollided = false;
 
   FallingObject(this.type, {super.position})
     : super(size: Vector2.all(60), anchor: Anchor.center);
@@ -742,7 +739,6 @@ class FallingObject extends SpriteComponent
     await super.onLoad();
     sprite = await gameRef.loadSprite(_getAssetPath());
 
-    // FIXED: Menggunakan RectangleHitbox dengan ukuran yang konsisten
     add(
       RectangleHitbox(
         size: Vector2(size.x * 0.8, size.y * 0.8),
@@ -758,10 +754,7 @@ class FallingObject extends SpriteComponent
     if (!gameRef.isGameOver.value) {
       position.y += _speed * dt;
 
-      // Remove if it goes off-screen
       if (position.y > gameRef.size.y + size.y) {
-        // FIXED: TIDAK mengurangi lives untuk objek yang terlewat
-        // Hanya remove objek dari game tanpa penalty
         removeFromParent();
       }
     }
@@ -774,7 +767,7 @@ class FallingObject extends SpriteComponent
   ) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is Player && !_hasCollided && !gameRef.isGameOver.value) {
-      _hasCollided = true; // FIXED: Mencegah collision berganda
+      _hasCollided = true;
       _handleCollision(other);
     }
   }
@@ -794,8 +787,7 @@ class FallingObject extends SpriteComponent
         player.showReaction('wrong');
         break;
       case ObjectType.bomb:
-        gameRef
-            .decreaseLives(); // FIXED: Hanya kurangi lives, game over akan dicek di decreaseLives()
+        gameRef.decreaseLives();
         player.showReaction('wrong');
         break;
     }
@@ -816,12 +808,11 @@ class FallingObject extends SpriteComponent
   }
 }
 
-/// Background Component
 class Background extends PositionComponent with HasGameRef<KwakKwakGame> {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    // The green ground at the bottom
+
     add(
       RectangleComponent(
         position: Vector2(0, gameRef.size.y - 100),
@@ -832,7 +823,6 @@ class Background extends PositionComponent with HasGameRef<KwakKwakGame> {
   }
 }
 
-/// Cloud Component
 class Cloud extends SpriteComponent with HasGameRef<KwakKwakGame> {
   Cloud({super.position})
     : super(size: Vector2(150, 80), anchor: Anchor.center);
@@ -847,7 +837,7 @@ class Cloud extends SpriteComponent with HasGameRef<KwakKwakGame> {
   void update(double dt) {
     super.update(dt);
     if (!gameRef.isGameOver.value) {
-      position.x -= 30 * dt; // Move slowly to the left
+      position.x -= 30 * dt;
       if (position.x < -size.x) {
         removeFromParent();
       }
@@ -855,7 +845,6 @@ class Cloud extends SpriteComponent with HasGameRef<KwakKwakGame> {
   }
 }
 
-/// Score Indicator Component
 class ScoreIndicator extends TextComponent
     with HasGameRef<KwakKwakGame>
     implements OpacityProvider {
@@ -888,7 +877,7 @@ class ScoreIndicator extends TextComponent
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    // Animate the text moving up and fading out
+
     final endPosition = position - Vector2(0, 50);
     add(
       MoveToEffect(

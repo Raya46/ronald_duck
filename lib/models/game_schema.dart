@@ -2,9 +2,6 @@ import 'package:isar/isar.dart';
 
 part 'game_schema.g.dart';
 
-// =============================================
-// ENUMS (mencerminkan tipe data di Supabase)
-
 enum ItemType { hat, glasses, shirt }
 
 enum QuestTopic {
@@ -16,29 +13,23 @@ enum QuestTopic {
 
 enum FinancialChoiceType { tabung, investasi }
 
-// =============================================
-// 1. USER PROFILE & PROGRESS
-// Gabungan dari tabel 'profiles' dan 'user_progress' di Supabase.
-// =============================================
 @collection
 class UserProfile {
   Id id = Isar.autoIncrement;
 
   @Index(unique: true, replace: true)
-  String supabaseUserId; // Kunci untuk sinkronisasi
+  String supabaseUserId;
 
   String name;
   bool isHatched;
   String? phoneNumber;
-  String parentPassword; // Harus di-hash sebelum disimpan
+  String parentPassword;
 
-  // Data dari user_progress
   int xp;
   int coins;
   DateTime? lastDailyStreakClaim;
   int currentStreakDay;
 
-  // Relasi ke data lain
   final equippedItems = IsarLink<EquippedItems>();
 
   @Backlink(to: "user")
@@ -59,20 +50,16 @@ class UserProfile {
     this.coins = 0,
     this.lastDailyStreakClaim,
     this.currentStreakDay = 0,
-    this.isHatched = false
+    this.isHatched = false,
   });
 }
-
-// =============================================
-// 2. SHOP & INVENTORY
-// =============================================
 
 @collection
 class ShopItem {
   Id id = Isar.autoIncrement;
 
   @Index(unique: true, replace: true)
-  int supabaseItemId; // ID dari tabel shop_items di Supabase
+  int supabaseItemId;
 
   String name;
 
@@ -99,7 +86,7 @@ class UserInventoryItem {
   final item = IsarLink<ShopItem>();
 
   DateTime purchasedAt;
-  bool needsSync; // True jika item dibeli saat offline
+  bool needsSync;
 
   UserInventoryItem({required this.purchasedAt, this.needsSync = false});
 }
@@ -111,11 +98,17 @@ class EquippedItems {
   final hat = IsarLink<ShopItem>();
   final glasses = IsarLink<ShopItem>();
   final shirt = IsarLink<ShopItem>();
-}
 
-// =============================================
-// 3. QUEST & FINANCIAL CHOICES HISTORY
-// =============================================
+  int? hatSupabaseId;
+  int? glassesSupabaseId;
+  int? shirtSupabaseId;
+
+  EquippedItems({
+    this.hatSupabaseId,
+    this.glassesSupabaseId,
+    this.shirtSupabaseId,
+  });
+}
 
 @collection
 class QuestHistory {
@@ -128,7 +121,7 @@ class QuestHistory {
 
   bool isCorrect;
   DateTime answeredAt;
-  bool needsSync; // True jika kuis dijawab saat offline
+  bool needsSync;
 
   QuestHistory({
     required this.topic,
@@ -149,7 +142,7 @@ class FinancialChoice {
 
   int coinChange;
   DateTime createdAt;
-  bool needsSync; // True jika pilihan dibuat saat offline
+  bool needsSync;
 
   FinancialChoice({
     required this.choiceType,
@@ -159,9 +152,6 @@ class FinancialChoice {
   });
 }
 
-// =============================================
-// 4. APP SETTINGS (Lokal)
-// =============================================
 @collection
 class AppSettings {
   Id id = Isar.autoIncrement;

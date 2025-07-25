@@ -28,16 +28,13 @@ class _SettingScreenState extends State<SettingScreen> {
     });
 
     try {
-      // 1. Logout dari Supabase
       await Supabase.instance.client.auth.signOut();
 
-      // 2. Hapus semua data dari database lokal Isar
       final isar = await isarService.db;
       await isar.writeTxn(() async {
         await isar.clear();
       });
 
-      // 3. Navigasi ke LoginScreen dan hapus semua halaman sebelumnya
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),

@@ -18,9 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  /// Fungsi untuk sign up pengguna baru
   Future<void> _signUp() async {
-    // Validasi sederhana
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _phoneController.text.isEmpty ||
@@ -39,11 +37,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      // Mendaftarkan pengguna baru
       await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-        // Kirim data tambahan untuk disimpan di tabel 'profiles'
+
         data: {
           'name': _nameController.text.trim(),
           'phone_number': _phoneController.text.trim(),
@@ -301,9 +298,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implement Google Sign-In
-                      },
+                      onPressed: () {},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(

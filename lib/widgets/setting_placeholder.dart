@@ -15,10 +15,9 @@ class CustomSettingsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.topCenter,
-      clipBehavior: Clip.none, // Izinkan tab keluar dari batas Stack
+      clipBehavior: Clip.none,
       children: [
         Container(
-          // Margin atas untuk memberi ruang bagi tab agar tidak tertutup
           margin: const EdgeInsets.only(top: 28),
           decoration: BoxDecoration(
             color: const Color(0xFFDFBC5F),
@@ -32,24 +31,23 @@ class CustomSettingsCard extends StatelessWidget {
               ),
             ],
           ),
-          // Padding internal untuk konten di dalam kartu
+
           child: Padding(
-            // Padding atas lebih besar untuk memberi jarak dari tab
             padding: const EdgeInsets.only(
               top: 48,
               left: 16,
               right: 16,
               bottom: 24,
             ),
-            child: child, // Menampilkan konten (list button)
+            child: child,
           ),
         ),
 
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF39237), 
-            borderRadius: BorderRadius.circular(30), 
+            color: const Color(0xFFF39237),
+            borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.2),

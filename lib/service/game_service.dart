@@ -5,7 +5,6 @@ import 'package:ronald_duck/models/game_schema.dart';
 class IsarService {
   late Future<Isar> db;
 
-  // Singleton pattern
   static final IsarService _instance = IsarService._internal();
   factory IsarService() => _instance;
   IsarService._internal() {
@@ -32,8 +31,6 @@ class IsarService {
     return Future.value(Isar.getInstance());
   }
 
-  // --- UserProfile Operations ---
-
   Future<void> saveUserProfile(UserProfile profile) async {
     final isar = await db;
     await isar.writeTxn(() => isar.userProfiles.put(profile));
@@ -46,8 +43,6 @@ class IsarService {
         .supabaseUserIdEqualTo(supabaseUserId)
         .findFirst();
   }
-
-  // --- ShopItem Operations ---
 
   Future<void> saveShopItems(List<ShopItem> items) async {
     final isar = await db;
@@ -68,8 +63,6 @@ class IsarService {
         .findFirst();
   }
 
-  // --- Inventory & Equipped Items Operations ---
-
   Future<void> purchaseItem(UserProfile user, ShopItem item) async {
     final isar = await db;
     final newInventoryItem = UserInventoryItem(
@@ -86,21 +79,18 @@ class IsarService {
     });
   }
 
-  // --- FUNGSI BARU YANG DITAMBAHKAN ---
   Future<void> syncUserInventory(
     UserProfile user,
     Set<int> supabaseInventoryIds,
   ) async {
     final isar = await db;
     await isar.writeTxn(() async {
-      // Hapus inventaris lokal yang lama
       await user.inventory.load();
       await isar.userInventoryItems.deleteAll(
         user.inventory.map((e) => e.id).toList(),
       );
       user.inventory.clear();
 
-      // Buat ulang inventaris lokal berdasarkan data dari Supabase
       for (final itemId in supabaseInventoryIds) {
         final shopItem = await isar.shopItems.getBySupabaseItemId(itemId);
         if (shopItem != null) {
@@ -143,17 +133,73 @@ class IsarService {
 
   Future<void> updateEquippedItems(
     UserProfile user,
-    EquippedItems equipped,
+    EquippedItems equippedItems,
   ) async {
     final isar = await db;
+
     await isar.writeTxn(() async {
-      await isar.equippedItems.put(equipped);
-      user.equippedItems.value = equipped;
+      await equippedItems.hat.save();
+      await equippedItems.glasses.save();
+      await equippedItems.shirt.save();
+
+      await isar.equippedItems.put(equippedItems);
+
+      user.equippedItems.value = equippedItems;
+
       await user.equippedItems.save();
     });
   }
 
-  // --- History Operations ---
+  Future<EquippedItems?> getOrCreateEquippedItems(
+    UserProfile user, {
+    int? hatId,
+    int? glassesId,
+    int? shirtId,
+  }) async {
+    final isar = await db;
+    await user.equippedItems.load();
+    EquippedItems? equippedItems = user.equippedItems.value;
+
+    if (equippedItems == null) {
+      equippedItems = EquippedItems();
+      await isar.writeTxn(() async {
+        await isar.equippedItems.put(equippedItems!);
+        user.equippedItems.value = equippedItems;
+        await user.equippedItems.save();
+      });
+    }
+
+    bool needsUpdate = false;
+
+    if (hatId != equippedItems.hatSupabaseId) {
+      equippedItems.hat.value = await getShopItemBySupabaseId(hatId);
+      equippedItems.hatSupabaseId = hatId;
+      needsUpdate = true;
+    }
+
+    if (glassesId != equippedItems.glassesSupabaseId) {
+      equippedItems.glasses.value = await getShopItemBySupabaseId(glassesId);
+      equippedItems.glassesSupabaseId = glassesId;
+      needsUpdate = true;
+    }
+
+    if (shirtId != equippedItems.shirtSupabaseId) {
+      equippedItems.shirt.value = await getShopItemBySupabaseId(shirtId);
+      equippedItems.shirtSupabaseId = shirtId;
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+      await isar.writeTxn(() async {
+        await isar.equippedItems.put(equippedItems!);
+        await equippedItems.hat.save();
+        await equippedItems.glasses.save();
+        await equippedItems.shirt.save();
+      });
+    }
+
+    return equippedItems;
+  }
 
   Future<void> addQuestHistory(
     UserProfile user,
@@ -194,8 +240,6 @@ class IsarService {
       await financialChoice.user.save();
     });
   }
-
-  // --- AppSettings Operations ---
 
   Future<AppSettings> getAppSettings() async {
     final isar = await db;

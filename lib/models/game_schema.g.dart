@@ -3483,7 +3483,23 @@ extension GetEquippedItemsCollection on Isar {
 const EquippedItemsSchema = CollectionSchema(
   name: r'EquippedItems',
   id: 4632034000497503271,
-  properties: {},
+  properties: {
+    r'glassesSupabaseId': PropertySchema(
+      id: 0,
+      name: r'glassesSupabaseId',
+      type: IsarType.long,
+    ),
+    r'hatSupabaseId': PropertySchema(
+      id: 1,
+      name: r'hatSupabaseId',
+      type: IsarType.long,
+    ),
+    r'shirtSupabaseId': PropertySchema(
+      id: 2,
+      name: r'shirtSupabaseId',
+      type: IsarType.long,
+    )
+  },
   estimateSize: _equippedItemsEstimateSize,
   serialize: _equippedItemsSerialize,
   deserialize: _equippedItemsDeserialize,
@@ -3531,14 +3547,23 @@ void _equippedItemsSerialize(
   IsarWriter writer,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
-) {}
+) {
+  writer.writeLong(offsets[0], object.glassesSupabaseId);
+  writer.writeLong(offsets[1], object.hatSupabaseId);
+  writer.writeLong(offsets[2], object.shirtSupabaseId);
+}
+
 EquippedItems _equippedItemsDeserialize(
   Id id,
   IsarReader reader,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = EquippedItems();
+  final object = EquippedItems(
+    glassesSupabaseId: reader.readLongOrNull(offsets[0]),
+    hatSupabaseId: reader.readLongOrNull(offsets[1]),
+    shirtSupabaseId: reader.readLongOrNull(offsets[2]),
+  );
   object.id = id;
   return object;
 }
@@ -3550,6 +3575,12 @@ P _equippedItemsDeserializeProp<P>(
   Map<Type, List<int>> allOffsets,
 ) {
   switch (propertyId) {
+    case 0:
+      return (reader.readLongOrNull(offset)) as P;
+    case 1:
+      return (reader.readLongOrNull(offset)) as P;
+    case 2:
+      return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -3654,6 +3685,154 @@ extension EquippedItemsQueryWhere
 
 extension EquippedItemsQueryFilter
     on QueryBuilder<EquippedItems, EquippedItems, QFilterCondition> {
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      glassesSupabaseIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'glassesSupabaseId',
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      glassesSupabaseIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'glassesSupabaseId',
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      glassesSupabaseIdEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'glassesSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      glassesSupabaseIdGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'glassesSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      glassesSupabaseIdLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'glassesSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      glassesSupabaseIdBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'glassesSupabaseId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      hatSupabaseIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'hatSupabaseId',
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      hatSupabaseIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'hatSupabaseId',
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      hatSupabaseIdEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hatSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      hatSupabaseIdGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'hatSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      hatSupabaseIdLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'hatSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      hatSupabaseIdBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'hatSupabaseId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -3700,6 +3879,80 @@ extension EquippedItemsQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      shirtSupabaseIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'shirtSupabaseId',
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      shirtSupabaseIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'shirtSupabaseId',
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      shirtSupabaseIdEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'shirtSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      shirtSupabaseIdGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'shirtSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      shirtSupabaseIdLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'shirtSupabaseId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterFilterCondition>
+      shirtSupabaseIdBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'shirtSupabaseId',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -3758,10 +4011,80 @@ extension EquippedItemsQueryLinks
 }
 
 extension EquippedItemsQuerySortBy
-    on QueryBuilder<EquippedItems, EquippedItems, QSortBy> {}
+    on QueryBuilder<EquippedItems, EquippedItems, QSortBy> {
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      sortByGlassesSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'glassesSupabaseId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      sortByGlassesSupabaseIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'glassesSupabaseId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      sortByHatSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hatSupabaseId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      sortByHatSupabaseIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hatSupabaseId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      sortByShirtSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'shirtSupabaseId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      sortByShirtSupabaseIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'shirtSupabaseId', Sort.desc);
+    });
+  }
+}
 
 extension EquippedItemsQuerySortThenBy
     on QueryBuilder<EquippedItems, EquippedItems, QSortThenBy> {
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      thenByGlassesSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'glassesSupabaseId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      thenByGlassesSupabaseIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'glassesSupabaseId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      thenByHatSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hatSupabaseId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      thenByHatSupabaseIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hatSupabaseId', Sort.desc);
+    });
+  }
+
   QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -3773,16 +4096,71 @@ extension EquippedItemsQuerySortThenBy
       return query.addSortBy(r'id', Sort.desc);
     });
   }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      thenByShirtSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'shirtSupabaseId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QAfterSortBy>
+      thenByShirtSupabaseIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'shirtSupabaseId', Sort.desc);
+    });
+  }
 }
 
 extension EquippedItemsQueryWhereDistinct
-    on QueryBuilder<EquippedItems, EquippedItems, QDistinct> {}
+    on QueryBuilder<EquippedItems, EquippedItems, QDistinct> {
+  QueryBuilder<EquippedItems, EquippedItems, QDistinct>
+      distinctByGlassesSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'glassesSupabaseId');
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QDistinct>
+      distinctByHatSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hatSupabaseId');
+    });
+  }
+
+  QueryBuilder<EquippedItems, EquippedItems, QDistinct>
+      distinctByShirtSupabaseId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'shirtSupabaseId');
+    });
+  }
+}
 
 extension EquippedItemsQueryProperty
     on QueryBuilder<EquippedItems, EquippedItems, QQueryProperty> {
   QueryBuilder<EquippedItems, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<EquippedItems, int?, QQueryOperations>
+      glassesSupabaseIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'glassesSupabaseId');
+    });
+  }
+
+  QueryBuilder<EquippedItems, int?, QQueryOperations> hatSupabaseIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hatSupabaseId');
+    });
+  }
+
+  QueryBuilder<EquippedItems, int?, QQueryOperations>
+      shirtSupabaseIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'shirtSupabaseId');
     });
   }
 }

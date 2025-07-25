@@ -12,7 +12,6 @@ class QuestScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Background layer with pattern
           Container(
             color: const Color(0xFFF8ECB8),
             child: Opacity(
@@ -25,7 +24,7 @@ class QuestScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Content layer
+
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
@@ -35,7 +34,6 @@ class QuestScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Custom Header
                   Row(
                     children: [
                       Material(
@@ -67,7 +65,7 @@ class QuestScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 30),
-                  // Card for the "Kuis Cerdas Finansial" quest
+
                   _buildQuestCard(
                     context: context,
                     title: "Kuis Cerdas Finansial",
@@ -104,7 +102,7 @@ class QuestScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 24),
-                  // Card for the "Kwak-Kwak Tangkap!" quest
+
                   _buildQuestCard(
                     context: context,
                     title: "Kwak-Kwak Tangkap!",
@@ -157,7 +155,6 @@ class QuestScreen extends StatelessWidget {
     );
   }
 
-  /// A helper widget to build a styled, tappable card for each quest.
   Widget _buildQuestCard({
     required BuildContext context,
     required String title,
@@ -181,20 +178,19 @@ class QuestScreen extends StatelessWidget {
           height: 250,
           child: Stack(
             children: [
-              // Top part background with solid color or gradient
               Container(
                 decoration: BoxDecoration(color: topColor, gradient: gradient),
               ),
-              // Bottom part with curved shape
+
               Positioned.fill(
                 child: ClipPath(
                   clipper: HillClipper(),
                   child: Container(color: bottomColor),
                 ),
               ),
-              // Sparkles in the top area
+
               ..._buildSparkles(5, 120),
-              // Positioned images
+
               ...images,
               Positioned(
                 bottom: 20,
@@ -248,12 +244,11 @@ class QuestScreen extends StatelessWidget {
     );
   }
 
-  /// Generates a list of positioned sparkle widgets.
   List<Widget> _buildSparkles(int count, double maxHeight) {
     final random = Random();
     return List.generate(count, (index) {
       return Positioned(
-        left: random.nextDouble() * 300, // Adjust width range
+        left: random.nextDouble() * 300,
         top: random.nextDouble() * maxHeight,
         child: const Icon(Icons.circle, color: Colors.white, size: 12),
       );
@@ -261,17 +256,16 @@ class QuestScreen extends StatelessWidget {
   }
 }
 
-/// Custom clipper for the hill shape on the quest card.
 class HillClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.moveTo(0, size.height * 0.5); // Start point (lowered)
+    path.moveTo(0, size.height * 0.5);
     path.quadraticBezierTo(
       size.width / 2,
-      size.height * 0.3, // Control point for the curve (lowered)
+      size.height * 0.3,
       size.width,
-      size.height * 0.55, // End point (lowered)
+      size.height * 0.55,
     );
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);

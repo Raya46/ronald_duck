@@ -20,13 +20,13 @@ class ShopGridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: isEquipped ? 6 : 2, // Higher elevation for equipped items
+      elevation: isEquipped ? 6 : 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side:
             isEquipped
                 ? const BorderSide(color: Color(0xFF78B96A), width: 2)
-                : BorderSide.none, // Green border for equipped items
+                : BorderSide.none,
       ),
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
@@ -40,7 +40,6 @@ class ShopGridItem extends StatelessWidget {
               Expanded(
                 child: Stack(
                   children: [
-                    // Main item image
                     Center(
                       child: Image.asset(
                         imagePath,
@@ -54,7 +53,7 @@ class ShopGridItem extends StatelessWidget {
                         },
                       ),
                     ),
-                    // Equipped indicator overlay
+
                     if (isEquipped)
                       Positioned(
                         top: 0,

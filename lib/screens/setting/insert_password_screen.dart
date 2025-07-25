@@ -32,7 +32,6 @@ class _InsertPasswordState extends State<InsertPassword> {
 
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
-      // Handle jika tidak ada user yang login
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Tidak ada pengguna yang aktif.'),
@@ -43,14 +42,10 @@ class _InsertPasswordState extends State<InsertPassword> {
       return;
     }
 
-    // Ambil profil dari database lokal Isar
     final UserProfile? userProfile = await _isarService.getUserProfile(userId);
 
     if (userProfile != null) {
-      // TODO: Ganti perbandingan ini dengan verifikasi hash di aplikasi production
-      // Contoh: if (bcrypt.checkpw(enteredPassword, storedHash))
       if (userProfile.parentPassword == _passwordController.text.trim()) {
-        // Jika password cocok, navigasi ke dashboard
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -60,7 +55,6 @@ class _InsertPasswordState extends State<InsertPassword> {
           );
         }
       } else {
-        // Jika password salah
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -71,7 +65,6 @@ class _InsertPasswordState extends State<InsertPassword> {
         }
       }
     } else {
-      // Jika profil tidak ditemukan di lokal
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

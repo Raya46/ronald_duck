@@ -40,7 +40,6 @@ class _DailyStreakScreenState extends State<DailyStreakScreen> {
   Future<void> _fetchUserData() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
-      // Handle user not logged in
       setState(() => _isLoading = false);
       return;
     }
@@ -53,7 +52,6 @@ class _DailyStreakScreenState extends State<DailyStreakScreen> {
         _isLoading = false;
       });
     }
-    // TODO: Tambahkan logika untuk sinkronisasi dengan Supabase jika data lokal tidak ada
   }
 
   void _checkClaimStatus(UserProfile profile) {
@@ -74,29 +72,24 @@ class _DailyStreakScreenState extends State<DailyStreakScreen> {
 
     int newStreakDay = _userProfile!.currentStreakDay;
 
-    // Cek apakah streak berlanjut atau reset
     if (_userProfile!.lastDailyStreakClaim == null ||
         _userProfile!.lastDailyStreakClaim != yesterday) {
-      newStreakDay = 1; // Reset streak
+      newStreakDay = 1;
     } else {
-      newStreakDay++; // Lanjutkan streak
-      if (newStreakDay > 7)
-        newStreakDay = 1; // Kembali ke hari 1 setelah 7 hari
+      newStreakDay++;
+      if (newStreakDay > 7) newStreakDay = 1;
     }
 
     final rewardPoints = streakData[newStreakDay - 1]['points'];
 
-    // Update state lokal untuk UI instan
     setState(() {
       _userProfile!.currentStreakDay = newStreakDay;
       _userProfile!.lastDailyStreakClaim = today;
       _canClaim = false;
     });
 
-    // Simpan ke Isar
     await isarService.saveUserProfile(_userProfile!);
 
-    // Update ke Supabase di latar belakang
     try {
       await supabase.from('user_progress').upsert({
         'user_id': _userProfile!.supabaseUserId,
@@ -105,10 +98,8 @@ class _DailyStreakScreenState extends State<DailyStreakScreen> {
       });
     } catch (e) {
       print("Error updating Supabase: $e");
-      // TODO: Tambahkan logika untuk mencoba lagi nanti jika gagal
     }
 
-    // Pindah ke halaman pilihan hadiah dengan membawa jumlah koin
     Navigator.push(
       context,
       MaterialPageRoute(

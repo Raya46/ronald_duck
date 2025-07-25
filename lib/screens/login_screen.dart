@@ -16,7 +16,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  /// Fungsi untuk sign in dengan email dan password
   Future<void> _signIn() async {
     setState(() {
       _isLoading = true;
@@ -29,14 +28,12 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (mounted) {
-        // Jika berhasil, ganti halaman ke HomeScreen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
     } on AuthException catch (error) {
       if (mounted) {
-        // Tampilkan pesan error jika login gagal
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(error.message),
@@ -46,7 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (error) {
       if (mounted) {
-        // Tangani error tak terduga lainnya
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Terjadi kesalahan, silakan coba lagi.'),
@@ -209,9 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implement Google Sign-In
-                      },
+                      onPressed: () {},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
