@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:isar/isar.dart';
 import 'package:ronald_duck/models/game_schema.dart';
+import 'package:ronald_duck/screens/parent/parent_setting_screen.dart';
 import 'package:ronald_duck/service/game_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -196,6 +197,20 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings_outlined),
+            tooltip: 'Pengaturan Orang Tua',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ParentSettingScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body:
           _isLoading

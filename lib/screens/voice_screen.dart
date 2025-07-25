@@ -355,7 +355,7 @@ class _VoiceScreenState extends State<VoiceScreen>
   }
 
   String _getCurrentRonaldImage() {
-    if (_isThinking) return 'assets/images/ronald-wrong.png';
+    if (_isThinking) return 'assets/images/ronald-think.png';
     if (_isSpeaking) return 'assets/images/ronald-adult.png';
     return 'assets/images/ronald-wink.png';
   }
@@ -453,20 +453,6 @@ class _VoiceScreenState extends State<VoiceScreen>
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              ScaleTransition(
-                                scale: _speakingAnimation,
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  child: Image.asset(
-                                    _getCurrentRonaldImage(),
-                                    key: ValueKey<String>(
-                                      _getCurrentRonaldImage(),
-                                    ),
-                                    width: 500,
-                                    height: 500,
-                                  ),
-                                ),
-                              ),
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10.0,
@@ -478,6 +464,20 @@ class _VoiceScreenState extends State<VoiceScreen>
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              ScaleTransition(
+                                scale: _speakingAnimation,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Image.asset(
+                                    _getCurrentRonaldImage(),
+                                    key: ValueKey<String>(
+                                      _getCurrentRonaldImage(),
+                                    ),
+                                    width: 500,
+                                    height: 500,
                                   ),
                                 ),
                               ),

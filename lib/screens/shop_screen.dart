@@ -32,9 +32,6 @@ class _ShopScreenState extends State<ShopScreen> {
     _fetchData();
   }
 
-  // --- SEMUA METODE LOGIKA DATA (fetch, load, sync, purchase, equip) TETAP SAMA ---
-  // ... (Tidak perlu mengubah _fetchData, _loadLocalData, _syncWithSupabase, dll)
-
   Future<void> _fetchData() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
@@ -288,16 +285,13 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
-  /// Helper function untuk membangun item yang dipakai secara dinamis.
   Widget _buildEquippedItem(ShopItem? item, double characterSize) {
     if (item == null) {
       return const SizedBox.shrink();
     }
 
-    // Ambil konfigurasi dari map, atau gunakan default jika tidak ada.
     final fit = accessoryFits[item.assetPath] ?? const AccessoryFit();
 
-    // Kalkulasi ukuran dan posisi secara dinamis.
     final double itemWidth = characterSize * fit.widthFactor;
     final double itemHeight = characterSize * fit.heightFactor;
     final double topPosition = characterSize * fit.topOffsetFactor;
@@ -317,8 +311,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Gunakan Sizer untuk membuat ukuran karakter responsif.
-    final characterSize = 50.w; // 50% dari lebar layar
+    final characterSize = 50.w;
 
     return Scaffold(
       body: Stack(
@@ -380,7 +373,6 @@ class _ShopScreenState extends State<ShopScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // Gambar karakter dasar
                           Image.asset(
                             'assets/images/ronald-child.png',
                             width: characterSize,
@@ -388,8 +380,6 @@ class _ShopScreenState extends State<ShopScreen> {
                             fit: BoxFit.contain,
                           ),
 
-                          // --- PERUBAHAN UTAMA ---
-                          // Gunakan helper function untuk merender semua aksesori
                           _buildEquippedItem(
                             _equippedItems?.hat.value,
                             characterSize,

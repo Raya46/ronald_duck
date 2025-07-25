@@ -171,186 +171,189 @@ class _QuizScreenState extends State<QuizScreen> {
     final currentQuestion = _questions[_currentQuestionIndex];
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(color: const Color(0xFFF8ECB8)),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Card(
-                              elevation: 4,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.arrow_back),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Card(
-                              elevation: 4,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.refresh),
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedOption = null;
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            _buildInfoCard(
-                              Icons.local_fire_department,
-                              Colors.orange,
-                              '${_userProfile?.xp ?? 0}',
-                            ),
-                            const SizedBox(width: 4),
-                            _buildInfoCard(
-                              Icons.star,
-                              Colors.amber,
-                              '${_userProfile?.coins ?? 0}',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Stack(
-                      alignment: Alignment.topCenter,
-                      clipBehavior: Clip.none,
-                      children: [
-                        Image.asset(
-                          currentQuestion.image,
-                          width: 200,
-                          height: 200,
-                        ),
-                        Positioned(
-                          top: 5,
-                          right: 20,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            child: Image.asset(
-                              currentQuestion.imageIcon,
-                              width: 30,
-                              height: 30,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -20,
-                          left: 0,
-                          right: 0,
-                          child: Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Text(
-                                currentQuestion.text,
-                                style: GoogleFonts.nunito(fontSize: 16),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                    ...List.generate(currentQuestion.options.length, (index) {
-                      final optionLetter = String.fromCharCode(
-                        'A'.codeUnitAt(0) + index,
-                      );
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: OptionCard(
-                          prefix: optionLetter,
-                          text: currentQuestion.options[index],
-                          isSelected: _selectedOption == optionLetter,
-                          onTap: () => _onOptionSelected(optionLetter),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.lightbulb_outline),
-                            onPressed:
-                                () => _showHintModal(
-                                  context,
-                                  currentQuestion.hint,
-                                ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: _checkAnswer,
-                          child: Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            color: const Color(0xFF78B96A),
-                            child: const Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 30,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+      backgroundColor: const Color(0xFFF8ECB8),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            children: [
+              _buildTopBar(),
+              const SizedBox(height: 20),
+
+              _buildCharacterHeader(currentQuestion),
+              const SizedBox(height: 20),
+
+              _buildQuestionCard(currentQuestion),
+              const SizedBox(height: 20),
+
+              Expanded(
+                child: ListView.builder(
+                  itemCount: currentQuestion.options.length,
+                  itemBuilder: (context, index) {
+                    final optionLetter = String.fromCharCode(
+                      'A'.codeUnitAt(0) + index,
+                    );
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: OptionCard(
+                        prefix: optionLetter,
+                        text: currentQuestion.options[index],
+                        isSelected: _selectedOption == optionLetter,
+                        onTap: () => _onOptionSelected(optionLetter),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
+
+              _buildBottomControls(),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              _buildIconButton(
+                Icons.arrow_back,
+                () => Navigator.of(context).pop(),
+              ),
+              const SizedBox(width: 8),
+              _buildIconButton(Icons.refresh, _startNewQuest),
+            ],
+          ),
+          _buildInfoCard(
+            Icons.star,
+            Colors.amber,
+            '${_userProfile?.coins ?? 0}',
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard(IconData icon, Color color, String text) {
+  Widget _buildCharacterHeader(Question currentQuestion) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Image.asset(currentQuestion.image, width: 120, height: 120),
+        const SizedBox(width: 16),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(Icons.cloud, color: Colors.white, size: 100),
+            Image.asset(currentQuestion.imageIcon, width: 50, height: 50),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuestionCard(Question currentQuestion) {
     return Card(
-      elevation: 4,
+      elevation: 2,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.all(20.0),
+        child: Text(
+          currentQuestion.text,
+          style: GoogleFonts.nunito(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap:
+              () => _showHintModal(
+                context,
+                _questions[_currentQuestionIndex].hint,
+              ),
+          child: Card(
+            elevation: 4,
+            shadowColor: Colors.black.withOpacity(0.2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Icon(
+                Icons.lightbulb_outline,
+                color: Colors.orange,
+                size: 32,
+              ),
+            ),
+          ),
+        ),
+
+        GestureDetector(
+          onTap: _checkAnswer,
+          child: Card(
+            elevation: 4,
+            shadowColor: Colors.green.withOpacity(0.4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            color: const Color(0xFF78B96A),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Icon(Icons.check, color: Colors.white, size: 32),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, VoidCallback onPressed) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.black54),
+        onPressed: onPressed,
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(IconData icon, Color color, String text) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 4),
-            Text(text, style: GoogleFonts.nunito()),
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              text,
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ],
         ),
       ),
