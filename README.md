@@ -53,7 +53,7 @@ Untuk menjalankan proyek ini secara lokal, ikuti langkah-langkah berikut:
     flutter run
     ```
 
-## 🧑‍💻 Tim Kami: Advadev
+## 🧑‍💻 Tim Kami: Summon
 
 Proyek ini dikembangkan dengan penuh semangat oleh tim **Advadev**:
 
