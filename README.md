@@ -55,7 +55,7 @@ Untuk menjalankan proyek ini secara lokal, ikuti langkah-langkah berikut:
 
 ## 🧑‍💻 Tim Kami: Summon
 
-Proyek ini dikembangkan dengan penuh semangat oleh tim **Advadev**:
+Proyek ini dikembangkan dengan penuh semangat oleh tim **Summon**:
 
 - **Valtrizt Khalifah** - Hacker
 - **Muhammad Raya Ar Rizki** - Hacker
